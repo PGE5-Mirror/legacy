@@ -39,7 +39,7 @@ Files should be named using a sequential three-digit number followed by a short 
 
 * **Status:** [Proposed | Accepted | Rejected | Superseded]
 * **Superseded decision:** [ADR reference if needed]
-* **Date:** [DD-MM-YYYY]
+* **Date:** [DD/MM/YYYY]
 * **Authors:** [Names]
 
 ## Context

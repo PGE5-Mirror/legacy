@@ -19,7 +19,7 @@ The Legacy project does not have any containerization yet. To make deployment ea
   * **Cons:** Disproportionate operational burden (maintenance, security, storage)
 
 ## Decision
-Docker Hub would be the smartest choice for the project. The Docker would be used mainly for hosting an local instance of the app for development so no needs for Github binding features, and if we want to duplicate the environment in Github actions, it would be difficult to setup a local hub. Docker Hub can do both easily.
+Docker Hub would be the smartest choice for the project. The Docker containers would be used mainly for hosting an local instance of the app for development so no needs for Github binding features, and if we want to duplicate the environment in Github actions, it would be difficult to setup a local hub. Docker Hub can do both easily.
 
 ## Consequences
 * **Positive:** Easy to setup, easy to use and reliable.

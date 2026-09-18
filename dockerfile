@@ -6,7 +6,9 @@ COPY package*.json ./
 
 RUN npm install
 
-COPY . .
+COPY src/ ./src/
+
+USER node
 
 EXPOSE 3000
 

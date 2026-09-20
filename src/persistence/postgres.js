@@ -22,23 +22,23 @@ async function getItems() {
 }
 
 async function getItem(id) {
-    const { rows } = await pool.query('SELECT * FROM tasks WHERE id = ?', id);
+    const { rows } = await pool.query('SELECT * FROM tasks WHERE id = $1', [id]);
     return rows[0];
 }
 
 async function storeItem(item) {
-    const { rows } = await pool.query('INSERT INTO tasks (title) VALUES ($1) RETURNING *',
-        [item.title]);
+    const { rows } = await pool.query('INSERT INTO tasks (name) VALUES ($1) RETURNING *',
+        [item.name]);
     return rows[0];
 }
 
 async function updateItem(id, item) {
-    await pool.query('UPDATE tasks SET title = $1, status = $2 WHERE id = $3',
-        [item.title, item.status, id]);
+    await pool.query('UPDATE tasks SET name = $1, status = $2 WHERE id = $3',
+        [item.name, item.status, id]);
 }
 
 async function removeItem(id) {
-    await pool.query('DELETE FROM tasks WHERE id = ?', id);
+    await pool.query('DELETE FROM tasks WHERE id = $1', [id]);
 }
 
 module.exports = {

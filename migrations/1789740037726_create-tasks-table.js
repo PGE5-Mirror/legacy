@@ -9,6 +9,22 @@ export const shorthands = undefined;
  * @returns {Promise<void> | void}
  */
 export const up = (pgm) => {
+    pgm.createTable('columns', {
+        id: {
+            type: 'uuid',
+            default: pgm.func('gen_random_uuid()'),
+            notNull: true,
+            primaryKey: true,
+        },
+        name: { type: 'varchar(255)', notNull: true },
+        position: { type: 'integer', notNull: true, default: 0 },
+        createdAt: {
+            type: 'timestamp',
+            notNull: true,
+            default: pgm.func('current_timestamp'),
+        },
+    });
+
     pgm.createTable('tasks', {
         id: {
             type: 'uuid',
@@ -16,15 +32,18 @@ export const up = (pgm) => {
             notNull: true,
             primaryKey: true,
         },
-        title: {
+        name: {
             type: 'varchar(255)',
             notNull: true,
         },
-        status: {
-            type: 'varchar(50)',
-            notNull: true,
-            default: 'PENDING',
+        completed: { type: 'boolean', notNull: true, default: false },
+        column_id: {
+            type: 'uuid',
+            references: '"columns"',
+            onDelete: 'CASCADE',
+            notNull: false,
         },
+        position: { type: 'integer', notNull: true, default: 0 },
         createdAt: {
             type: 'timestamp',
             notNull: true,
@@ -39,5 +58,6 @@ export const up = (pgm) => {
  * @returns {Promise<void> | void}
  */
 export const down = (pgm) => {
+    pgm.dropTable('columns');
     pgm.dropTable('tasks');
 };

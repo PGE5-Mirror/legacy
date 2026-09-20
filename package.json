@@ -4,8 +4,9 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "node src/index.js",
     "dev": "nodemon -L src/index.js",
+    "migrate": "node-pg-migrate",
+    "start": "node-pg-migrate up && node src/index.js",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "SQLITE_DB_LOCATION=./test.db jest"
@@ -14,11 +15,15 @@
     "amqplib": "^2.0.1",
     "express": "^5.2.1",
     "mysql2": "^3.16.1",
+    "node-pg-migrate": "^9.0.0",
+    "pg": "^8.23.0",
     "sqlite3": "^5.1.7",
     "uuid": "^13.0.0",
     "wait-port": "^1.1.0"
   },
   "devDependencies": {
+    "dotenv": "^18.0.0",
+    "nodemon": "^3.1.9",
     "@eslint/js": "^9.39.5",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",

@@ -14,10 +14,8 @@
   "dependencies": {
     "amqplib": "^2.0.1",
     "express": "^5.2.1",
-    "mysql2": "^3.16.1",
     "node-pg-migrate": "^9.0.0",
     "pg": "^8.23.0",
-    "sqlite3": "^5.1.7",
     "uuid": "^13.0.0",
     "wait-port": "^1.1.0"
   },

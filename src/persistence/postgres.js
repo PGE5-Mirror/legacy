@@ -33,8 +33,8 @@ async function storeItem(item) {
 }
 
 async function updateItem(id, item) {
-    await pool.query('UPDATE tasks SET name = $1, status = $2 WHERE id = $3',
-        [item.name, item.status, id]);
+    await pool.query('UPDATE tasks SET name = $1, completed = $2 WHERE id = $3',
+        [item.name, item.completed, id]);
 }
 
 async function removeItem(id) {

@@ -153,7 +153,8 @@ async function findById(id) {
     return new Promise((acc, rej) => {
         pool.query('SELECT * FROM tasks WHERE id=?', [id], (err, rows) => {
             if (err) return rej(err);
-            acc(rows[0]);
+            const row = rows[0];
+            acc(row && Object.assign({}, row, { createdAt: row.createdAt.toISOString() }));
         });
     });
 }

@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon -L src/index.js"
+    "dev": "nodemon -L src/index.js",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

@@ -43,8 +43,15 @@ async function init() {
             err => {
                 if (err) return rej(err);
 
-                console.log(`Connected to mysql db at host ${HOST}`);
-                acc();
+                pool.query(
+                    'CREATE TABLE IF NOT EXISTS tasks (id varchar(36), title varchar(255), status varchar(50), createdAt datetime) DEFAULT CHARSET utf8mb4',
+                    err => {
+                        if (err) return rej(err);
+
+                        console.log(`Connected to mysql db at host ${HOST}`);
+                        acc();
+                    },
+                );
             },
         );
     });
@@ -124,6 +131,42 @@ async function removeItem(id) {
     });
 }
 
+
+function toMysqlDatetime(dateInput) {
+    return new Date(dateInput).toISOString().slice(0, 19).replace('T', ' ');
+}
+
+async function create(task) {
+    return new Promise((acc, rej) => {
+        pool.query(
+            'INSERT INTO tasks (id, title, status, createdAt) VALUES (?, ?, ?, ?)',
+            [task.id, task.title, task.status, toMysqlDatetime(task.createdAt)],
+            err => {
+                if (err) return rej(err);
+                acc();
+            },
+        );
+    });
+}
+
+async function findById(id) {
+    return new Promise((acc, rej) => {
+        pool.query('SELECT * FROM tasks WHERE id=?', [id], (err, rows) => {
+            if (err) return rej(err);
+            acc(rows[0]);
+        });
+    });
+}
+
+async function updateStatus(id, status) {
+    return new Promise((acc, rej) => {
+        pool.query('UPDATE tasks SET status=? WHERE id=?', [status, id], err => {
+            if (err) return rej(err);
+            acc();
+        });
+    });
+}
+
 module.exports = {
     init,
     teardown,
@@ -132,4 +175,7 @@ module.exports = {
     storeItem,
     updateItem,
     removeItem,
+    create,
+    findById,
+    updateStatus,
 };

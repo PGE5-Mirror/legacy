@@ -21,7 +21,14 @@ function init() {
                 'CREATE TABLE IF NOT EXISTS todo_items (id varchar(36), name varchar(255), completed boolean)',
                 (err, result) => {
                     if (err) return rej(err);
-                    acc();
+
+                    db.run(
+                        'CREATE TABLE IF NOT EXISTS tasks (id varchar(36), title varchar(255), status varchar(50), createdAt datetime)',
+                        err => {
+                            if (err) return rej(err);
+                            acc();
+                        },
+                    );
                 },
             );
         });
@@ -102,6 +109,38 @@ async function removeItem(id) {
     });
 }
 
+
+async function create(task) {
+    return new Promise((acc, rej) => {
+        db.run(
+            'INSERT INTO tasks (id, title, status, createdAt) VALUES (?, ?, ?, ?)',
+            [task.id, task.title, task.status, task.createdAt],
+            err => {
+                if (err) return rej(err);
+                acc();
+            },
+        );
+    });
+}
+
+async function findById(id) {
+    return new Promise((acc, rej) => {
+        db.all('SELECT * FROM tasks WHERE id=?', [id], (err, rows) => {
+            if (err) return rej(err);
+            acc(rows[0]);
+        });
+    });
+}
+
+async function updateStatus(id, status) {
+    return new Promise((acc, rej) => {
+        db.run('UPDATE tasks SET status=? WHERE id=?', [status, id], err => {
+            if (err) return rej(err);
+            acc();
+        });
+    });
+}
+
 module.exports = {
     init,
     teardown,
@@ -110,4 +149,7 @@ module.exports = {
     storeItem,
     updateItem,
     removeItem,
+    create,
+    findById,
+    updateStatus,
 };

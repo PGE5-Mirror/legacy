@@ -1,21 +1,25 @@
 const db = require('../persistence');
-const { v4: uuid } = require('uuid');
+const {v4 : uuid} = require('uuid');
 const { publishEvent } = require('../events/rabbitmq');
 
 module.exports = async (req, res) => {
-  const item = {
-    id: uuid(),
-    name: req.body.name,
-    completed: false,
-  };
+    try {
+        const {name} = req.body;
 
-  await db.storeItem(item);
+        if (!name || name.trim().length < 1) {
+            return res.status(400).json({error: 'Missing title'});
+        }
 
-  try {
-    await publishEvent('TaskCreated', { taskId: item.id, name: item.name });
-  } catch (err) {
-    console.error('Failed to publish TaskCreated event:', err);
-  }
+        const createdTask = await db.storeItem({name: name});
 
-  res.send(item);
+        try {
+            await publishEvent('TaskCreated', { taskId: createdTask.id, name: createdTask.name });
+        } catch (err) {
+            console.error('Failed to publish TaskCreated event:', err);
+        }
+
+        return res.status(201).json(createdTask);
+    } catch (err) {
+        res.status(500).json(err);
+    }
 };

@@ -1,20 +1,27 @@
 {
   "name": "101-app",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
-    "dev": "nodemon -L src/index.js"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
   },
   "dependencies": {
     "express": "^5.2.1",
     "mysql2": "^3.16.1",
     "sqlite3": "^5.1.7",
+    "typescript": "^7.0.2",
     "uuid": "^13.0.0",
     "wait-port": "^1.1.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.2",
+    "@types/uuid": "^10.0.0",
+    "nodemon": "^3.1.9",
+    "ts-node-dev": "^2.0.0"
   },
   "overrides": {
     "tar": "7.5.4",

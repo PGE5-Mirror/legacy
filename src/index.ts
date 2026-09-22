@@ -1,14 +1,17 @@
-const express = require('express');
-const app = express();
-const db = require('./persistence');
-const getItems = require('./routes/getItems');
-const addItem = require('./routes/addItem');
-const updateItem = require('./routes/updateItem');
-const deleteItem = require('./routes/deleteItem');
-const { startTaskCreatedConsumer } = require('./events/consumers/taskCreatedConsumer');
+import express from 'express';
+import path from 'path';
+import * as db from './persistence';
+import getItems from './routes/getItems';
+import addItem from './routes/addItem';
+import updateItem from './routes/updateItem';
+import deleteItem from './routes/deleteItem';
+import { startTaskCreatedConsumer } from './events/consumers/taskCreatedConsumer';
 
+const app = express();
+
+app.disable('x-powered-by');
 app.use(express.json());
-app.use(express.static(__dirname + '/static'));
+app.use(express.static(path.join(__dirname, 'static')));
 
 app.get('/items', getItems);
 app.post('/items', addItem);
@@ -25,7 +28,7 @@ db.init()
     process.exit(1);
   });
 
-const gracefulShutdown = () => {
+const gracefulShutdown = (): void => {
   db.teardown()
     .catch(() => {})
     .then(() => process.exit());

@@ -1,10 +1,10 @@
-const amqp = require('amqplib');
+import amqp, { Channel } from 'amqplib';
 
-let channel = null;
+let channel: Channel | null = null;
 
 const RABBITMQ_URL = `amqp://${process.env.RABBITMQ_USER || 'guest'}:${process.env.RABBITMQ_PASSWORD || 'guest'}@${process.env.RABBITMQ_HOST || 'localhost'}:${process.env.RABBITMQ_PORT || 5672}`;
 
-async function connect() {
+async function connect(): Promise<Channel> {
   if (channel) return channel;
 
   const connection = await amqp.connect(RABBITMQ_URL);
@@ -18,13 +18,16 @@ async function connect() {
   return channel;
 }
 
-async function publishEvent(queueName, payload) {
+export async function publishEvent(queueName: string, payload: unknown): Promise<void> {
   const ch = await connect();
   await ch.assertQueue(queueName, { durable: true });
   ch.sendToQueue(queueName, Buffer.from(JSON.stringify(payload)), { persistent: true });
 }
 
-async function consumeEvent(queueName, onMessage) {
+export async function consumeEvent<T = unknown>(
+  queueName: string,
+  onMessage: (data: T) => void,
+): Promise<void> {
   const ch = await connect();
   await ch.assertQueue(queueName, { durable: true });
   ch.consume(queueName, (msg) => {
@@ -35,5 +38,3 @@ async function consumeEvent(queueName, onMessage) {
     }
   });
 }
-
-module.exports = { connect, publishEvent, consumeEvent };

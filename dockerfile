@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 COPY tsconfig.json ./
-RUN npm ci --silent
+RUN npm ci --silent --ignore-scripts
 
 COPY src/ ./src/
 

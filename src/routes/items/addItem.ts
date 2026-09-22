@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import * as db from '../../persistence';
 import { publishEvent } from '../../events/rabbitmq';
+import { createItem } from '../../services/items.service';
 
-export default async function addItem(req: Request, res: Response): Promise<Response | void> {
+export default async function addItemController(req: Request, res: Response): Promise<Response | void> {
     try {
         const { name } = req.body;
 
@@ -10,7 +10,7 @@ export default async function addItem(req: Request, res: Response): Promise<Resp
             return res.status(400).json({ error: 'Missing title' });
         }
 
-        const createdTask = await db.storeItem({ name: name });
+        const createdTask = await createItem({ name: name});
 
         try {
             await publishEvent('TaskCreated', { taskId: createdTask.id, name: createdTask.name });

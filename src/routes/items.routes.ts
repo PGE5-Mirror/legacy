@@ -1,14 +1,14 @@
 import { Router } from 'express';
-import getItems from './items/getItems';
-import addItem from './items/addItem';
-import updateItem from './items/updateItem';
-import deleteItem from './items/deleteItem';
+import getItemsController from './items/getItems';
+import addItemController from './items/addItem';
+import updateItemController from './items/updateItem';
+import deleteItemController from './items/deleteItem';
 
 const router = Router();
 
-router.get('/items', getItems);
-router.post('/items', addItem);
-router.put('/items/:id', updateItem);
-router.delete('/items/:id', deleteItem);
+router.get('/items', getItemsController);
+router.post('/items', addItemController);
+router.put('/items/:id', updateItemController);
+router.delete('/items/:id', deleteItemController);
 
 export default router;

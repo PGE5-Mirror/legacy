@@ -20,12 +20,19 @@ async function createItem(data: ItemData) {
 }
 
 async function removeItem(id: string) {
+    const item = db.getItem(id);
     await db.removeItem(id);
+    return item;
 }
 
 async function getItems() {
     const items = await db.getItems();
     return items;
+}
+
+async function getItemById(id: string) {
+    const item = await db.getItem(id);
+    return item;
 }
 
 async function updateItem(data: ItemData) {
@@ -46,5 +53,6 @@ export {
     createItem,
     removeItem,
     getItems,
+    getItemById,
     updateItem,
 };

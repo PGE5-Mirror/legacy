@@ -6,32 +6,56 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
-      - MYSQL_HOST=db
-      - MYSQL_USER=todo_user
-      - MYSQL_PASSWORD=todo_password
-      - MYSQL_DB=todo_db
+      - DATABASE_URL=postgres://todo_user:todo_password@db:5432/todo_db
+      - NODE_ENV=production
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+    networks:
+      - todo-network
     depends_on:
       db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   db:
-    image: mysql:8.0
+    image: postgres:16-alpine
     ports:
-      - "3306:3306"
+      - '5432:5432'
     environment:
-      - MYSQL_ROOT_PASSWORD=root_password
-      - MYSQL_DATABASE=todo_db
-      - MYSQL_USER=todo_user
-      - MYSQL_PASSWORD=todo_password
+      - POSTGRES_DB=todo_db
+      - POSTGRES_USER=todo_user
+      - POSTGRES_PASSWORD=todo_password
     volumes:
-      - db_data:/var/lib/mysql
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - todo-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ['CMD-SHELL', 'pg_isready -U todo_user -d todo_db']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    networks:
+      - todo-network
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', 'check_port_connectivity']
       interval: 10s
       timeout: 5s
       retries: 5
 
+networks:
+  todo-network:
+    driver: bridge
+
 volumes:
-  db_data:
+  pg_data:

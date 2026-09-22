@@ -5,6 +5,7 @@ interface ItemData {
     id?: string;
     name: string;
     completed?: boolean;
+    userId?: string;
     createdAt?: Date;
 }
 
@@ -13,6 +14,7 @@ async function createItem(data: ItemData) {
         id: uuid(),
         name: data.name,
         completed: false,
+        userId: data.userId,
         createdAt: new Date(),
     };
     await db.storeItem(item);
@@ -25,8 +27,8 @@ async function removeItem(id: string) {
     return item;
 }
 
-async function getItems() {
-    const items = await db.getItems();
+async function getItemsByUserId(userId: string) {
+    const items = await db.getItemsByUserId(userId);
     return items;
 }
 
@@ -52,7 +54,7 @@ async function updateItem(data: ItemData) {
 export {
     createItem,
     removeItem,
-    getItems,
+    getItemsByUserId,
     getItemById,
     updateItem,
 };

@@ -1,15 +1,18 @@
 import express from 'express';
-import path from 'path';
+import path from 'node:path';
 import * as db from './persistence';
 
 import itemsRoutes from './routes/items.routes';
+import authRoutes from './routes/auth.routes';
 import { startTaskCreatedConsumer } from './events/consumers/taskCreatedConsumer';
 
 const app = express();
 
 app.use(express.json());
+app.disable("x-powered-by");
 
 app.use('/', itemsRoutes);
+app.use('/', authRoutes);
 
 app.use(express.static(path.join(__dirname, '/static')));
 

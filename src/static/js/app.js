@@ -1,44 +1,322 @@
 function App() {
+  const [token, setToken] = React.useState(() => localStorage.getItem('authToken') || '');
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [error, setError] = React.useState('');
+  const [successMessage, setSuccessMessage] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [isRegistering, setIsRegistering] = React.useState(false);
   const { Container, Row, Col } = ReactBootstrap;
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    setLoading(true);
+
+    fetch('/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error('Invalid credentials');
+        return r.json();
+      })
+      .then((data) => {
+        const receivedToken = data.token || data.access_token || data; 
+        if (typeof receivedToken === 'string') {
+          localStorage.setItem('authToken', receivedToken);
+          setToken(receivedToken);
+        } else {
+          throw new TypeError('Invalid token format');
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message || 'Connection error');
+        setLoading(false);
+      });
+  };
+
+  const handleRegister = (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    setLoading(true);
+
+    fetch('/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error('Registration failed');
+        return r.json();
+      })
+      .then((data) => {
+        const receivedToken = data.token || data.access_token || (typeof data === 'string' ? data : null);
+        
+        if (typeof receivedToken === 'string') {
+          localStorage.setItem('authToken', receivedToken);
+          setToken(receivedToken);
+          setLoading(false);
+        } else {
+          return fetch('/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password }),
+            headers: { 'Content-Type': 'application/json' },
+          })
+            .then((loginRes) => {
+              if (!loginRes.ok) throw new Error('Auto-login failed after registration');
+              return loginRes.json();
+            })
+            .then((loginData) => {
+              const loginToken = loginData.token || loginData.access_token || loginData;
+              if (typeof loginToken === 'string') {
+                localStorage.setItem('authToken', loginToken);
+                setToken(loginToken);
+              } else {
+                throw new TypeError('Invalid token format');
+              }
+              setLoading(false);
+            });
+        }
+      })
+      .catch((err) => {
+        setError(err.message || 'Registration error');
+        setLoading(false);
+      });
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    setToken('');
+    setEmail('');
+    setPassword('');
+    setError('');
+    setSuccessMessage('');
+  };
+
+let content;
+  if (!token) {
+    content = isRegistering ? (
+      <RegisterForm
+        email={email}
+        setEmail={setEmail}
+        password={password}
+        setPassword={setPassword}
+        onRegister={handleRegister}
+        switchToLogin={() => {
+          setIsRegistering(false);
+          setError('');
+          setSuccessMessage('');
+        }}
+        error={error}
+        loading={loading}
+      />
+    ) : (
+      <LoginForm
+        email={email}
+        setEmail={setEmail}
+        password={password}
+        setPassword={setPassword}
+        onLogin={handleLogin}
+        switchToRegister={() => {
+          setIsRegistering(true);
+          setError('');
+          setSuccessMessage('');
+        }}
+        error={error}
+        successMessage={successMessage}
+        loading={loading}
+      />
+    );
+  } else {
+    content = <TodoListCard token={token} />;
+  }
+
   return (
-    <Container>
+    <Container className="mt-4">
+      {token && (
+        <div className="d-flex justify-content-end mb-3">
+          <ReactBootstrap.Button variant="outline-danger" size="sm" onClick={handleLogout}>
+            Logout
+          </ReactBootstrap.Button>
+        </div>
+      )}
       <Row>
         <Col md={{ offset: 3, span: 6 }}>
-          <TodoListCard />
+          {content}
         </Col>
       </Row>
     </Container>
   );
 }
 
-function TodoListCard() {
+function LoginForm({ email, setEmail, password, setPassword, onLogin, switchToRegister, error, successMessage, loading }) {
+  const { Form, Button, Alert } = ReactBootstrap;
+
+  return (
+    <div className="card mt-5 shadow-sm">
+      <div className="card-body p-4">
+        <h3 className="card-title text-center mb-4">Login</h3>
+        {error && <Alert variant="danger">{error}</Alert>}
+        {successMessage && <Alert variant="success">{successMessage}</Alert>}
+        <Form onSubmit={onLogin}>
+          <Form.Group className="mb-3">
+            <Form.Label>Email address</Form.Label>
+            <Form.Control
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Password</Form.Label>
+            <Form.Control
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </Form.Group>
+
+          <Button variant="success" type="submit" className="w-100 mt-2" disabled={loading}>
+            {loading ? 'Connecting...' : 'Login'}
+          </Button>
+        </Form>
+        <div className="text-center mt-3">
+          <small>
+            Don't have an account?{' '}
+            <button 
+              type="button" 
+              className="btn btn-link text-success fw-bold p-0 align-baseline text-decoration-underline" 
+              onClick={switchToRegister}
+            >
+              Sign up
+            </button>
+          </small>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RegisterForm({ email, setEmail, password, setPassword, onRegister, switchToLogin, error, loading }) {
+  const { Form, Button, Alert } = ReactBootstrap;
+
+  return (
+    <div className="card mt-5 shadow-sm">
+      <div className="card-body p-4">
+        <h3 className="card-title text-center mb-4">Create Account</h3>
+        {error && <Alert variant="danger">{error}</Alert>}
+        <Form onSubmit={onRegister}>
+          <Form.Group className="mb-3">
+            <Form.Label>Email address</Form.Label>
+            <Form.Control
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Password</Form.Label>
+            <Form.Control
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </Form.Group>
+
+          <Button variant="success" type="submit" className="w-100 mt-2" disabled={loading}>
+            {loading ? 'Creating account...' : 'Sign Up'}
+          </Button>
+        </Form>
+        <div className="text-center mt-3">
+          <small>
+            Already have an account?{' '}
+            <button 
+              type="button" 
+              className="btn btn-link text-success fw-bold p-0 align-baseline text-decoration-underline" 
+              onClick={switchToLogin}
+            >
+              Log in
+            </button>
+          </small>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TodoListCard({ token }) {
   const [items, setItems] = React.useState(null);
 
+  const authHeaders = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+
   React.useEffect(() => {
-    fetch('/items')
-      .then((r) => r.json())
-      .then(setItems);
-  }, []);
+    fetch('/items', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then((r) => {
+        if (r.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.reload();
+        }
+        return r.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setItems(data);
+        } else if (data && Array.isArray(data.items)) {
+          setItems(data.items);
+        } else {
+          setItems([]);
+        }
+      })
+      .catch(() => {
+        setItems([]);
+      });
+  }, [token]);
 
   const onNewItem = React.useCallback(
     (newItem) => {
-      setItems([...items, newItem]);
+      setItems((prevItems) => [...(Array.isArray(prevItems) ? prevItems : []), newItem]);
     },
-    [items],
+    [],
   );
 
   const onItemUpdate = React.useCallback(
     (item) => {
+      if (!Array.isArray(items)) return;
       const index = items.findIndex((i) => i.id === item.id);
-      setItems([...items.slice(0, index), item, ...items.slice(index + 1)]);
+      if (index !== -1) {
+        setItems([...items.slice(0, index), item, ...items.slice(index + 1)]);
+      }
     },
     [items],
   );
 
   const onItemRemoval = React.useCallback(
     (item) => {
+      if (!Array.isArray(items)) return;
       const index = items.findIndex((i) => i.id === item.id);
-      setItems([...items.slice(0, index), ...items.slice(index + 1)]);
+      if (index !== -1) {
+        setItems([...items.slice(0, index), ...items.slice(index + 1)]);
+      }
     },
     [items],
   );
@@ -47,7 +325,7 @@ function TodoListCard() {
 
   return (
     <React.Fragment>
-      <AddItemForm onNewItem={onNewItem} />
+      <AddItemForm onNewItem={onNewItem} authHeaders={authHeaders} />
       {items.length === 0 && <p className="text-center">No items yet! Add one above!</p>}
       {items.map((item) => (
         <ItemDisplay
@@ -55,13 +333,14 @@ function TodoListCard() {
           key={item.id}
           onItemUpdate={onItemUpdate}
           onItemRemoval={onItemRemoval}
+          authHeaders={authHeaders}
         />
       ))}
     </React.Fragment>
   );
 }
 
-function AddItemForm({ onNewItem }) {
+function AddItemForm({ onNewItem, authHeaders }) {
   const { Form, InputGroup, Button } = ReactBootstrap;
 
   const [newItem, setNewItem] = React.useState('');
@@ -73,14 +352,15 @@ function AddItemForm({ onNewItem }) {
     fetch('/items', {
       method: 'POST',
       body: JSON.stringify({ name: newItem }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
     })
       .then((r) => r.json())
       .then((item) => {
         onNewItem(item);
         setSubmitting(false);
         setNewItem('');
-      });
+      })
+      .catch(() => setSubmitting(false));
   };
 
   return (
@@ -108,7 +388,7 @@ function AddItemForm({ onNewItem }) {
   );
 }
 
-function ItemDisplay({ item, onItemUpdate, onItemRemoval }) {
+function ItemDisplay({ item, onItemUpdate, onItemRemoval, authHeaders }) {
   const { Container, Row, Col, Button } = ReactBootstrap;
 
   const toggleCompletion = () => {
@@ -118,14 +398,17 @@ function ItemDisplay({ item, onItemUpdate, onItemRemoval }) {
         name: item.name,
         completed: !item.completed,
       }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
     })
       .then((r) => r.json())
       .then(onItemUpdate);
   };
 
   const removeItem = () => {
-    fetch(`/items/${item.id}`, { method: 'DELETE' }).then(() => onItemRemoval(item));
+    fetch(`/items/${item.id}`, { 
+      method: 'DELETE',
+      headers: authHeaders 
+    }).then(() => onItemRemoval(item));
   };
 
   return (

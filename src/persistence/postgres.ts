@@ -4,6 +4,14 @@ interface Task {
     id?: string;
     name: string;
     completed?: boolean;
+    userId?: string;
+    createdAt?: Date;
+}
+
+interface User {
+    id?: string;
+    email: string;
+    password: string;
     createdAt?: Date;
 }
 
@@ -35,8 +43,8 @@ async function getItem(id: string): Promise<Task | undefined> {
 
 async function storeItem(item: Task): Promise<Task> {
     const { rows }: QueryResult<Task> = await pool.query(
-        'INSERT INTO tasks (name) VALUES ($1) RETURNING *',
-        [item.name]
+        'INSERT INTO tasks (id, name, user_id) VALUES ($1, $2, $3) RETURNING *',
+        [item.id, item.name, item.userId]
     );
     return rows[0];
 }
@@ -52,12 +60,36 @@ async function removeItem(id: string): Promise<void> {
     await pool.query('DELETE FROM tasks WHERE id = $1', [id]);
 }
 
+async function storeUser(user: User): Promise<User> {
+    const { rows }: QueryResult<User> = await pool.query(
+        'INSERT INTO users (id, email, password) VALUES ($1, $2, $3) RETURNING *',
+        [user.id, user.email, user.password]
+    );
+    return rows[0];
+}
+
+async function getUser(email: string): Promise<User | undefined> {
+    const { rows }: QueryResult<User> = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    return rows[0];
+}
+
+async function getItemsByUserId(userId: string): Promise<Task[]> {
+    const { rows }: QueryResult<Task> = await pool.query(
+        'SELECT * FROM tasks WHERE user_id = $1 ORDER BY "createdAt" DESC',
+        [userId]
+    );
+    return rows;
+}
+
 export {
     init,
     teardown,
     getItems,
     getItem,
+    getItemsByUserId,
     storeItem,
     updateItem,
     removeItem,
+    storeUser,
+    getUser,
 };

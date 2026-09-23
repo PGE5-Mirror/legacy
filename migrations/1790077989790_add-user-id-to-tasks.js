@@ -14,7 +14,7 @@ export const up = (pgm) => {
       type: 'uuid',
       references: '"users"',
       onDelete: 'CASCADE',
-      notNull: false, // Mettez true si chaque tâche doit obligatoirement avoir un user
+      notNull: true,
     },
   });
 };

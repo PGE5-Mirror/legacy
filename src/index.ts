@@ -13,6 +13,8 @@ app.disable('x-powered-by');
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'static')));
 
+app.get('/health', (_req, res) => res.sendStatus(200));
+
 app.get('/items', getItems);
 app.post('/items', addItem);
 app.put('/items/:id', updateItem);

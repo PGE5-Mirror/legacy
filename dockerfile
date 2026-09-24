@@ -1,10 +1,10 @@
-FROM node:20-alpine AS build
+FROM node:20-alpine AS builder
 
 WORKDIR /usr/src/app
 
-COPY package*.json tsconfig.json ./
-
-RUN npm ci --ignore-scripts --silent
+COPY package*.json ./
+COPY tsconfig.json ./
+RUN npm ci --silent --ignore-scripts
 
 COPY src/ ./src/
 
@@ -18,8 +18,10 @@ COPY package*.json ./
 
 RUN npm ci --omit=dev --ignore-scripts --silent
 
-COPY --from=build /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/dist ./dist
+
 COPY migrations/ ./migrations/
+COPY --from=builder /usr/src/app/src/static ./dist/static
 
 USER node
 

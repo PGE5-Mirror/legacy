@@ -1,7 +1,14 @@
 import { consumeEvent } from '../rabbitmq';
 
-export function startTaskCreatedConsumer(): void {
-  consumeEvent('TaskCreated', (data: { taskId: string; name: string }) => {
+interface TaskCreatedData {
+  taskId: string;
+  name: string;
+}
+
+function startTaskCreatedConsumer(): void {
+  consumeEvent('TaskCreated', (data: TaskCreatedData) => {
     console.log(`[TaskCreated] New task created: ${data.name} (id: ${data.taskId})`);
   });
 }
+
+export { startTaskCreatedConsumer };

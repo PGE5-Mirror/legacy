@@ -13,39 +13,47 @@ Use this file as the canonical standup template. Copy or duplicate it and name t
 -
 
 ## Attendees
-- Andrej, Arthur, Elisenda, Camille
+- Andrej, Clement, Elisenda, Camille, Franceska
 
 ## Notes (per person)
 
 ### Andrej
 - Yesterday / Done:
-	- Merged multiple branches, rewrote the project in typescript
+	- merged TS ranch
 - Today / In progress:
-	- finish the first sprint goals
+	- readme.md + notifications
 - Blockers:
 	- Blocker: 
 
 ### Camille
 - Yesterday / Done:
-	- typescript merge conflicts
+	- did tests with jest
 - Today / In progress:
-	- rewrite tests with jest
+	- merge it into dev
 - Blockers:
 	- Blocker: 
 
-### Arthur
+### Clement
 - Yesterday / Done:
-	- controller layer and service layer in TS
+	- db negotiation, new table
 - Today / In progress:
-	- merge the work into the codebase + authentication
+	- review user notification of arthur, fix duplicate code, start with gdpr
 - Blockers:
 	- Blocker: 
 
 ### Elisenda
 - Yesterday / Done:
-	- CI
+	- Finished the CI
 - Today / In progress:
-	- finish CI
+	- Presentation, 
+- Blockers:
+	- Blocker: 
+
+### Franceska
+- Yesterday / Done:
+	- Did the typescript for the frontend
+- Today / In progress:
+	- PR on the dev branch,
 - Blockers:
 	- Blocker: 
 

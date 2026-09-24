@@ -62,7 +62,7 @@ jobs:
 
       - name: Wait for app to be ready
         run: |
-          if ! ./node_modules/.bin/wait-on http://localhost:3000/items --timeout 30000; then
+          if ! ./node_modules/.bin/wait-on http://localhost:3000/health --timeout 30000; then
             echo "App did not come up in time, logs:"
             cat app.log
             exit 1
@@ -75,7 +75,7 @@ jobs:
 
       - name: Health check
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/items)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health)
           if [ "$STATUS" -ne 200 ]; then
             echo "App did not return 200 (got $STATUS), logs:"
             cat app.log

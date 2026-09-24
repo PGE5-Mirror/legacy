@@ -12,7 +12,6 @@ app.disable("x-powered-by");
 
 app.get('/health', (_req, res) => res.sendStatus(200));
 
-// Utilisation propre des routeurs mis à jour (incluant la vérification JWT)
 app.use('/', itemsRoutes);
 app.use('/', authRoutes);
 

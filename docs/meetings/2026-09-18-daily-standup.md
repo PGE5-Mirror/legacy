@@ -17,19 +17,51 @@ Use this file as the standup template. Copy or duplicate it and name the copy us
 
 ## Notes (per person)
 
-### Person Name
+### Andrej
 - Yesterday / Done:
-	- 
+	- All the tickets
 - Today / In progress:
-	- 
+	- fix the dockerfile errors
 - Blockers:
 	- Blocker: 
 
-### Person Name
+### Clement
 - Yesterday / Done:
 	- 
 - Today / In progress:
+	- Persistence Layer of the DB
+- Blockers:
+	- Blocker: 
+
+### Camille
+- Yesterday / Done:
 	- 
+- Today / In progress:
+	- Typescript for backend
+- Blockers:
+	- Blocker: 
+
+### Arthur
+- Yesterday / Done:
+	- tests
+- Today / In progress:
+	- Controller route
+- Blockers:
+	- Blocker: 
+
+### Franceska
+- Yesterday / Done:
+	- 
+- Today / In progress:
+	- Typescript for the frontend
+- Blockers:
+	- Blocker: 
+
+### Elisenda
+- Yesterday / Done:
+	- Linter
+- Today / In progress:
+	- RabbitMQ
 - Blockers:
 	- Blocker: 
 

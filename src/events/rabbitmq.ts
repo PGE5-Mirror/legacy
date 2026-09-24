@@ -15,6 +15,11 @@ async function connect(): Promise<Channel> {
     channel = null;
   });
 
+  connection.on('error', (err) => {
+    console.error('RabbitMQ connection error', err);
+    channel = null;
+  });
+
   return channel;
 }
 

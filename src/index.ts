@@ -11,6 +11,12 @@ const app = express();
 app.use(express.json());
 app.disable("x-powered-by");
 
+app.get('/health', (_req, res) => res.sendStatus(200));
+
+app.get('/items', getItems);
+app.post('/items', addItem);
+app.put('/items/:id', updateItem);
+app.delete('/items/:id', deleteItem);
 app.use('/', itemsRoutes);
 app.use('/', authRoutes);
 

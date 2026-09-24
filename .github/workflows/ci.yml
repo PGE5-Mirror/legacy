@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev]
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: todo_db
+          POSTGRES_USER: todo_user
+          POSTGRES_PASSWORD: todo_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U todo_user -d todo_db"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd="rabbitmq-diagnostics check_port_connectivity"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgres://todo_user:todo_password@localhost:5432/todo_db
+      RABBITMQ_HOST: localhost
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build the project
+        run: npm run build
+
+      - name: Start the app
+        run: |
+          npm start > app.log 2>&1 &
+          echo $! > app.pid
+
+      - name: Wait for app to be ready
+        run: |
+          if ! ./node_modules/.bin/wait-on http://localhost:3000/health --timeout 30000; then
+            echo "App did not come up in time, logs:"
+            cat app.log
+            exit 1
+          fi
+          if ! kill -0 "$(cat app.pid)" 2>/dev/null; then
+            echo "App process exited early, logs:"
+            cat app.log
+            exit 1
+          fi
+
+      - name: Health check
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health)
+          if [ "$STATUS" -ne 200 ]; then
+            echo "App did not return 200 (got $STATUS), logs:"
+            cat app.log
+            exit 1
+          fi
+          echo "App is healthy (200 OK)"

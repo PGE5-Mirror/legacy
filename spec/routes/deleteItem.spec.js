@@ -1,20 +1,33 @@
-const db = require('../../src/persistence');
-const deleteItem = require('../../src/routes/deleteItem');
-const ITEM = { id: 12345 };
+import express from 'express';
+import request from 'supertest';
+import deleteItem from '../../src/routes/deleteItem';
+import * as taskService from '../../src/services/TaskService';
 
-jest.mock('../../src/persistence', () => ({
-    removeItem: jest.fn(),
-    getItem: jest.fn(),
-}));
+jest.mock('../../src/services/TaskService');
 
-test('it removes item correctly', async () => {
-    const req = { params: { id: 12345 } };
-    const res = { sendStatus: jest.fn() };
+const app = express();
+app.use(express.json());
+app.delete('/items/:id', deleteItem);
 
-    await deleteItem(req, res);
+describe('DELETE /items/:id', () => {
+    it('returns 200 on happy path', async () => {
+        (taskService.removeTask as jest.Mock).mockResolvedValue(true);
 
-    expect(db.removeItem.mock.calls.length).toBe(1);
-    expect(db.removeItem.mock.calls[0][0]).toBe(req.params.id);
-    expect(res.sendStatus.mock.calls[0].length).toBe(1);
-    expect(res.sendStatus.mock.calls[0][0]).toBe(200);
+        const res = await request(app).delete('/items/1');
+        expect(res.status).toBe(200);
+    });
+
+    it('returns 404 if the item is missing', async () => {
+        (taskService.removeTask as jest.Mock).mockResolvedValue(false);
+
+        const res = await request(app).delete('/items/999');
+        expect(res.status).toBe(404);
+    });
+
+    it('returns 500 on failure', async () => {
+        (taskService.removeTask as jest.Mock).mockRejectedValue(new Error('DB Error'));
+
+        const res = await request(app).delete('/items/1');
+        expect(res.status).toBe(500);
+    });
 });

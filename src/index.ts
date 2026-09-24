@@ -12,6 +12,14 @@ import addColumn from './routes/addColumn';
 import updateColumn from './routes/updateColumn';
 import deleteColumn from './routes/deleteColumn';
 import { startTaskCreatedConsumer } from './events/consumers/taskCreatedConsumer';
+import { verifyToken } from './middlewares/auth.middleware';
+import getOrganizations from './routes/getOrganizations';
+import addOrganization from './routes/addOrganization';
+import updateOrganization from './routes/updateOrganization';
+import deleteOrganization from './routes/deleteOrganization';
+import getOrganizationMembers from './routes/getOrganizationMembers';
+import addOrganizationMember from './routes/addOrganizationMember';
+import deleteOrganizationMember from './routes/deleteOrganizationMember';
 
 const app = express();
 
@@ -34,6 +42,15 @@ app.get('/columns', getColumns);
 app.post('/columns', addColumn);
 app.put('/columns/:id', updateColumn);
 app.delete('/columns/:id', deleteColumn);
+
+app.get('/organizations', verifyToken, getOrganizations);
+app.post('/organizations', verifyToken, addOrganization);
+app.put('/organizations/:id', verifyToken, updateOrganization);
+app.delete('/organizations/:id', verifyToken, deleteOrganization);
+
+app.get('/organizations/:id/members', verifyToken, getOrganizationMembers);
+app.post('/organizations/:id/members', verifyToken, addOrganizationMember);
+app.delete('/organizations/:id/members/:memberId', verifyToken, deleteOrganizationMember);
 
 db.init()
   .then(() => {

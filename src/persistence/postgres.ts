@@ -1,6 +1,12 @@
 import { Pool, QueryResult } from 'pg';
 import { Project, NewProject, ProjectUpdate } from '../models/Project';
 import { Column, NewColumn, ColumnUpdate } from '../models/Column';
+import { Organization, NewOrganization, OrganizationUpdate } from '../models/Organization';
+import {
+  OrganizationMember,
+  NewOrganizationMember,
+  OrganizationMemberUpdate,
+} from '../models/OrganizationMember';
 
 interface Task {
   id?: string;
@@ -126,6 +132,78 @@ export async function updateColumn(id: string, column: ColumnUpdate): Promise<vo
 
 export async function removeColumn(id: string): Promise<void> {
   await pool.query('DELETE FROM columns WHERE id = $1', [id]);
+}
+
+export async function getOrganizations(): Promise<Organization[]> {
+  const { rows } = await pool.query<Organization>(
+    'SELECT * FROM organizations order by "createdAt" DESC',
+  );
+  return rows;
+}
+
+export async function getOrganization(id: string): Promise<Organization | undefined> {
+  const { rows } = await pool.query<Organization>('SELECT * FROM organizations WHERE id = $1', [
+    id,
+  ]);
+  return rows[0];
+}
+
+export async function storeOrganization(organization: NewOrganization): Promise<Organization> {
+  const { rows } = await pool.query<Organization>(
+    'INSERT INTO organizations (name) VALUES ($1) RETURNING *',
+    [organization.name],
+  );
+  return rows[0];
+}
+
+export async function updateOrganization(
+  id: string,
+  organization: OrganizationUpdate,
+): Promise<void> {
+  await pool.query('UPDATE organizations SET name = $1 WHERE id = $2', [organization.name, id]);
+}
+
+export async function removeOrganization(id: string): Promise<void> {
+  await pool.query('DELETE FROM organizations WHERE id = $1', [id]);
+}
+
+export async function getOrganizationMembers(
+  organizationId: string,
+): Promise<OrganizationMember[]> {
+  const { rows } = await pool.query<OrganizationMember>(
+    'SELECT * FROM organization_members WHERE organization_id = $1 order by "createdAt" ASC',
+    [organizationId],
+  );
+  return rows;
+}
+
+export async function getOrganizationMember(id: string): Promise<OrganizationMember | undefined> {
+  const { rows } = await pool.query<OrganizationMember>(
+    'SELECT * FROM organization_members WHERE id = $1',
+    [id],
+  );
+  return rows[0];
+}
+
+export async function storeOrganizationMember(
+  member: NewOrganizationMember,
+): Promise<OrganizationMember> {
+  const { rows } = await pool.query<OrganizationMember>(
+    'INSERT INTO organization_members (organization_id, user_id, role) VALUES ($1, $2, $3) RETURNING *',
+    [member.organization_id, member.user_id, member.role ?? 'member'],
+  );
+  return rows[0];
+}
+
+export async function updateOrganizationMember(
+  id: string,
+  member: OrganizationMemberUpdate,
+): Promise<void> {
+  await pool.query('UPDATE organization_members SET role = $1 WHERE id = $2', [member.role, id]);
+}
+
+export async function removeOrganizationMember(id: string): Promise<void> {
+  await pool.query('DELETE FROM organization_members WHERE id = $1', [id]);
 }
 
 async function storeUser(user: User): Promise<User> {

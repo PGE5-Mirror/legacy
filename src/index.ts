@@ -16,7 +16,7 @@ import { startTaskCreatedConsumer } from './events/consumers/taskCreatedConsumer
 const app = express();
 
 app.use(express.json());
-app.disable("x-powered-by");
+app.disable('x-powered-by');
 
 app.get('/health', (_req, res) => res.sendStatus(200));
 
@@ -36,19 +36,19 @@ app.put('/columns/:id', updateColumn);
 app.delete('/columns/:id', deleteColumn);
 
 db.init()
-    .then(() => {
-        app.listen(3000, () => console.log('Listening on port 3000'));
-        startTaskCreatedConsumer();
-    })
-    .catch((err: unknown) => {
-        console.error(err);
-        process.exit(1);
-    });
+  .then(() => {
+    app.listen(3000, () => console.log('Listening on port 3000'));
+    startTaskCreatedConsumer();
+  })
+  .catch((err: unknown) => {
+    console.error(err);
+    process.exit(1);
+  });
 
 const gracefulShutdown = () => {
-    db.teardown()
-        .catch(() => {})
-        .then(() => process.exit());
+  db.teardown()
+    .catch(() => {})
+    .then(() => process.exit());
 };
 
 process.on('SIGINT', gracefulShutdown);

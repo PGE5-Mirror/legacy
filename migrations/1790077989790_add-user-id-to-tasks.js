@@ -9,7 +9,7 @@ export const shorthands = undefined;
  * @returns {Promise<void> | void}
  */
 export const up = (pgm) => {
-    pgm.addColumn('tasks', {
+  pgm.addColumn('tasks', {
     user_id: {
       type: 'uuid',
       references: '"users"',
@@ -25,5 +25,5 @@ export const up = (pgm) => {
  * @returns {Promise<void> | void}
  */
 export const down = (pgm) => {
-    pgm.dropColumn('tasks', 'user_id');
+  pgm.dropColumn('tasks', 'user_id');
 };

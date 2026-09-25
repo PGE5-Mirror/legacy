@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import * as db from '../persistence';
 
-export default async (req: Request, res: Response): Promise<Response> => {
+export default async (req: Request<{ id: string }>, res: Response): Promise<Response> => {
   try {
-    const projects = await db.getProjects();
+    const { id } = req.params;
+    const projects = await db.getProjects(id);
     return res.status(200).json(projects || []);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

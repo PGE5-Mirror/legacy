@@ -71,8 +71,15 @@ async function removeItem(id: string): Promise<void> {
   await pool.query('DELETE FROM tasks WHERE id = $1', [id]);
 }
 
-export async function getProjects(): Promise<Project[]> {
-  const { rows } = await pool.query<Project>('SELECT * FROM projects order by "createdAt" DESC');
+export async function getProjects(organizationId?: string): Promise<Project[]> {
+  if (organizationId) {
+    const { rows } = await pool.query<Project>(
+      'SELECT * FROM projects WHERE organization_id = $1 ORDER BY "createdAt" DESC',
+      [organizationId],
+    );
+    return rows;
+  }
+  const { rows } = await pool.query<Project>('SELECT * FROM projects ORDER BY "createdAt" DESC');
   return rows;
 }
 
@@ -83,8 +90,8 @@ export async function getProject(id: string): Promise<Project | undefined> {
 
 export async function storeProject(project: NewProject): Promise<Project> {
   const { rows } = await pool.query<Project>(
-    'INSERT INTO projects (name) VALUES ($1) RETURNING *',
-    [project.name],
+    'INSERT INTO projects (name, organization_id) VALUES ($1, $2) RETURNING *',
+    [project.name, project.organization_id],
   );
   return rows[0];
 }

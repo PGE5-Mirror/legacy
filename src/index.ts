@@ -33,10 +33,8 @@ app.use('/', authRoutes);
 
 app.use(express.static(path.join(__dirname, '/static')));
 
-app.get('/projects', getProjects);
-app.post('/projects', addProject);
-app.put('/projects/:id', updateProject);
-app.delete('/projects/:id', deleteProject);
+app.put('/projects/:id', verifyToken, updateProject);
+app.delete('/projects/:id', verifyToken, deleteProject);
 
 app.get('/columns', getColumns);
 app.post('/columns', addColumn);
@@ -51,6 +49,9 @@ app.delete('/organizations/:id', verifyToken, deleteOrganization);
 app.get('/organizations/:id/members', verifyToken, getOrganizationMembers);
 app.post('/organizations/:id/members', verifyToken, addOrganizationMember);
 app.delete('/organizations/:id/members/:memberId', verifyToken, deleteOrganizationMember);
+
+app.get('/organizations/:id/projects', verifyToken, getProjects);
+app.post('/organizations/:id/projects', verifyToken, addProject);
 
 db.init()
   .then(() => {

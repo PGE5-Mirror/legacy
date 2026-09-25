@@ -6,6 +6,7 @@ export interface Project {
 
 export interface NewProject {
   name: string;
+  organization_id: string;
 }
 
 export interface ProjectUpdate {

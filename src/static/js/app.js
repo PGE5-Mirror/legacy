@@ -6,107 +6,124 @@ function App() {
   const [successMessage, setSuccessMessage] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [isRegistering, setIsRegistering] = React.useState(false);
-  const { Container, Row, Col } = ReactBootstrap;
+  const [showProfile, setShowProfile] = React.useState(false);
+  const { Container, Row, Col, Button } = ReactBootstrap;
 
-  const handleAuth = (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccessMessage('');
-    setLoading(true);
+    const handleAuth = (e) => {
+        e.preventDefault();
+        setError('');
+        setSuccessMessage('');
+        setLoading(true);
 
-    const endpoint = isRegistering ? '/register' : '/login';
+        const endpoint = isRegistering ? '/register' : '/login';
 
-    fetch(endpoint, {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-      headers: { 'Content-Type': 'application/json' },
-    })
-        .then((r) => {
-          if (!r.ok) throw new Error(isRegistering ? 'Registration failed' : 'Invalid credentials');
-          return r.json();
+        fetch(endpoint, {
+            method: 'POST',
+            body: JSON.stringify({email, password}),
+            headers: {'Content-Type': 'application/json'},
         })
-        .then((data) => {
-          const receivedToken = data.token || data.access_token || (typeof data === 'string' ? data : null);
-
-          if (typeof receivedToken === 'string') {
-            localStorage.setItem('authToken', receivedToken);
-            setToken(receivedToken);
-            setLoading(false);
-          } else if (isRegistering) {
-            // Fallback auto-login après inscription si pas de token
-            return fetch('/login', {
-              method: 'POST',
-              body: JSON.stringify({ email, password }),
-              headers: { 'Content-Type': 'application/json' },
+            .then((r) => {
+                if (!r.ok) throw new Error(isRegistering ? 'Registration failed' : 'Invalid credentials');
+                return r.json();
             })
-                .then((loginRes) => {
-                  if (!loginRes.ok) throw new Error('Auto-login failed after registration');
-                  return loginRes.json();
-                })
-                .then((loginData) => {
-                  const loginToken = loginData.token || loginData.access_token || loginData;
-                  if (typeof loginToken === 'string') {
-                    localStorage.setItem('authToken', loginToken);
-                    setToken(loginToken);
-                  } else {
+            .then((data) => {
+                const receivedToken = data.token || data.access_token || (typeof data === 'string' ? data : null);
+
+                if (typeof receivedToken === 'string') {
+                    localStorage.setItem('authToken', receivedToken);
+                    setToken(receivedToken);
+                    setLoading(false);
+                } else if (isRegistering) {
+                    return fetch('/login', {
+                        method: 'POST',
+                        body: JSON.stringify({email, password}),
+                        headers: {'Content-Type': 'application/json'},
+                    })
+                        .then((loginRes) => {
+                            if (!loginRes.ok) throw new Error('Auto-login failed after registration');
+                            return loginRes.json();
+                        })
+                        .then((loginData) => {
+                            const loginToken = loginData.token || loginData.access_token || loginData;
+                            if (typeof loginToken === 'string') {
+                                localStorage.setItem('authToken', loginToken);
+                                setToken(loginToken);
+                            } else {
+                                throw new TypeError('Invalid token format');
+                            }
+                            setLoading(false);
+                        });
+                } else {
                     throw new TypeError('Invalid token format');
-                  }
-                  setLoading(false);
-                });
-          } else {
-            throw new TypeError('Invalid token format');
-          }
-        })
-        .catch((err) => {
-          setError(err.message || 'Authentication error');
-          setLoading(false);
-        });
-  };
+                }
+            })
+            .catch((err) => {
+                setError(err.message || 'Authentication error');
+                setLoading(false);
+            });
+    };
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    setToken('');
-    setEmail('');
-    setPassword('');
-    setError('');
-    setSuccessMessage('');
-  };
+    const handleLogout = () => {
+        localStorage.removeItem('authToken');
+        setToken('');
+        setEmail('');
+        setPassword('');
+        setError('');
+        setSuccessMessage('');
+        setShowProfile(false);
+    };
 
-  return (
-      <Container className="mt-4">
-        {token && (
-            <div className="d-flex justify-content-end mb-3">
-              <ReactBootstrap.Button variant="outline-danger" size="sm" onClick={handleLogout}>
-                Logout
-              </ReactBootstrap.Button>
-            </div>
-        )}
-        <Row>
-          <Col md={{ offset: 3, span: 6 }}>
-            {!token ? (
-                <AuthForm
-                    email={email}
-                    setEmail={setEmail}
-                    password={password}
-                    setPassword={setPassword}
-                    onSubmit={handleAuth}
-                    isRegistering={isRegistering}
-                    toggleMode={() => {
-                      setIsRegistering(!isRegistering);
-                      setError('');
-                      setSuccessMessage('');
-                    }}
-                    error={error}
-                    successMessage={successMessage}
-                    loading={loading}
-                />
-            ) : (
-                <TodoListCard token={token} />
+    return (
+        <Container className="mt-4">
+            {/* Bouton Profil rond en haut à droite */}
+            {token && (
+                <div className="d-flex justify-content-end mb-3">
+                    <Button
+                        variant="light"
+                        className="rounded-circle p-0 border shadow-sm"
+                        style={{ width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onClick={() => setShowProfile(true)}
+                        aria-label="Profil utilisateur"
+                    >
+                        <i className="fa fa-user fa-lg text-secondary" />
+                    </Button>
+                </div>
             )}
-          </Col>
-        </Row>
-      </Container>
-  );
+
+            <Row>
+                <Col md={{ offset: 3, span: 6 }}>
+                    {!token ? (
+                        <AuthForm
+                            email={email}
+                            setEmail={setEmail}
+                            password={password}
+                            setPassword={setPassword}
+                            onSubmit={handleAuth}
+                            isRegistering={isRegistering}
+                            toggleMode={() => {
+                                setIsRegistering(!isRegistering);
+                                setError('');
+                                setSuccessMessage('');
+                            }}
+                            error={error}
+                            successMessage={successMessage}
+                            loading={loading}
+                        />
+                    ) : (
+                        <TodoListCard token={token} />
+                    )}
+                </Col>
+            </Row>
+
+            {/* Modale de gestion du profil & RGPD */}
+            <ProfileModal
+                show={showProfile}
+                onHide={() => setShowProfile(false)}
+                token={token}
+                onLogout={handleLogout}
+            />
+        </Container>
+    );
 }
 
 function AuthForm({

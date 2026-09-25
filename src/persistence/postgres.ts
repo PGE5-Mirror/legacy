@@ -73,6 +73,10 @@ async function getUser(email: string): Promise<User | undefined> {
     return rows[0];
 }
 
+async function deleteUser(id: string): Promise<void> {
+    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+}
+
 async function getItemsByUserId(userId: string): Promise<Task[]> {
     const { rows }: QueryResult<Task> = await pool.query(
         'SELECT * FROM tasks WHERE user_id = $1 ORDER BY "createdAt" DESC',
@@ -92,4 +96,5 @@ export {
     removeItem,
     storeUser,
     getUser,
+    deleteUser,
 };

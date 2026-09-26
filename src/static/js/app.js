@@ -2,6 +2,7 @@ function App() {
   const [token, setToken] = React.useState(() => localStorage.getItem('authToken') || '');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [tosAccepted, settosAccepted] = React.useState(false);
   const [error, setError] = React.useState('');
   const [successMessage, setSuccessMessage] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -13,6 +14,11 @@ function App() {
         e.preventDefault();
         setError('');
         setSuccessMessage('');
+        if (isRegistering && !tosAccepted) {
+            setError('You have to agree with (ToS) to register');
+            return;
+        }
+
         setLoading(true);
 
         const endpoint = isRegistering ? '/register' : '/login';
@@ -68,6 +74,7 @@ function App() {
         setToken('');
         setEmail('');
         setPassword('');
+        settosAccepted(false);
         setError('');
         setSuccessMessage('');
         setShowProfile(false);
@@ -98,6 +105,8 @@ function App() {
                             setEmail={setEmail}
                             password={password}
                             setPassword={setPassword}
+                            tosAccepted={tosAccepted}
+                            settosAccepted={settosAccepted}
                             onSubmit={handleAuth}
                             isRegistering={isRegistering}
                             toggleMode={() => {
@@ -131,6 +140,8 @@ function AuthForm({
                     setEmail,
                     password,
                     setPassword,
+                    tosAccepted,
+                    settosAccepted,
                     onSubmit,
                     isRegistering,
                     toggleMode,
@@ -171,6 +182,18 @@ function AuthForm({
                   required
               />
             </Form.Group>
+
+              {isRegistering && (
+                  <Form.Group className="mb-3">
+                      <Form.Check
+                          type="checkbox"
+                          id="tos-checkbox"
+                          label="I agrree with the Terms of Service"
+                          checked={tosAccepted}
+                          onChange={(e) => settosAccepted(e.target.checked)}
+                      />
+                  </Form.Group>
+              )}
 
             <Button variant="success" type="submit" className="w-100 mt-2" disabled={loading}>
               {loading

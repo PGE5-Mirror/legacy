@@ -3,6 +3,7 @@ import path from 'node:path';
 import * as db from './persistence';
 import itemsRoutes from './routes/items.routes';
 import authRoutes from './routes/auth.routes';
+import notificationsRoutes from './routes/notifications.routes';
 import { startTaskCreatedConsumer } from './events/consumers/taskCreatedConsumer';
 
 const app = express();
@@ -14,6 +15,7 @@ app.get('/health', (_req, res) => res.sendStatus(200));
 
 app.use('/', itemsRoutes);
 app.use('/', authRoutes);
+app.use('/', notificationsRoutes);
 
 app.use(express.static(path.join(__dirname, '/static')));
 

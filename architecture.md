@@ -9,7 +9,7 @@ RabbitMQ is used as the message broker for inter-component communication, per th
 - Broker runs as a service in `docker-compose.yml` (`rabbitmq:3-management` image)
 - AMQP port: `5672`
 - Management UI: `http://localhost:15672` (login: `guest` / `guest`)
-- The app connects via `src/events/rabbitmq.js`, using connection details from environment variables:
+- The app connects via `src/events/rabbitmq.ts`, using connection details from environment variables:
   - `RABBITMQ_HOST`
   - `RABBITMQ_PORT`
   - `RABBITMQ_USER`
@@ -19,21 +19,23 @@ RabbitMQ is used as the message broker for inter-component communication, per th
 
 | Queue name    | Published when          | Consumed by                              |
 |---------------|--------------------------|-------------------------------------------|
-| `TaskCreated` | A new task is created (`POST /items`) | `src/events/consumers/taskCreatedConsumer.js` (currently logs the event) |
+| `TaskCreated` | A new task is created (`POST /items`) | `src/events/consumers/taskCreatedConsumer.ts` — logs the event and creates a notification for the task's owner via `src/services/notifications.service.ts` |
 
 ### Adding a new event
 
-1. Call `publishEvent('QueueName', payload)` from `src/events/rabbitmq.js` wherever the triggering action happens.
+1. Call `publishEvent('QueueName', payload)` from `src/events/rabbitmq.ts` wherever the triggering action happens.
 2. Create a consumer in `src/events/consumers/` using `consumeEvent('QueueName', handler)`.
-3. Start the consumer in `index.js`, alongside the existing ones.
+3. Start the consumer in `src/index.ts`, alongside the existing ones.
 
 ### Verifying it works
 
-Send a POST request to create a task:
+Send a POST request to create a task (requires a Bearer token from `/login`):
 ```
 POST /items
 Content-Type: application/json
+Authorization: Bearer <token>
 
 { "name": "Example task" }
 ```
-You should see a `[TaskCreated] New task created: ...` log line from the consumer.
+You should see a `[TaskCreated] New task created: ...` log line from the consumer, and a
+`GET /notifications` (with the same token) should return a new notification for that task.

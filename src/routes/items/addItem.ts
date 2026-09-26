@@ -19,7 +19,7 @@ export default async function addItemController(req: AuthenticatedRequest, res: 
         const createdTask = await createItem({ name, userId });
 
         try {
-            await publishEvent('TaskCreated', { taskId: createdTask.id, name: createdTask.name });
+            await publishEvent('TaskCreated', { taskId: createdTask.id, name: createdTask.name, userId: createdTask.userId });
         } catch (err) {
             console.error('Failed to publish TaskCreated event:', err);
         }

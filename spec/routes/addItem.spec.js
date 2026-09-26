@@ -1,100 +1,54 @@
-const db = require('../../src/persistence');
-const addItem = require('../../src/routes/addItem');
-const {v4 : uuid} = require('uuid');
+import express from 'express';
+import request from 'supertest';
+import addItem from '../../src/routes/addItem';
+import * as taskService from '../../src/services/TaskService';
+import * as eventBus from '../../src/utils/EventBus'; // Adjust path as needed
 
-jest.mock('uuid', () => ({ v4: jest.fn() }));
+jest.mock('../../src/services/TaskService');
+jest.mock('../../src/utils/EventBus');
 
-jest.mock('../../src/persistence', () => ({
-    removeItem: jest.fn(),
-    storeItem: jest.fn(),
-    getItem: jest.fn(),
-}));
+const app = express();
+app.use(express.json());
+app.post('/items', addItem);
 
-beforeEach(() => {
-    jest.clearAllMocks();
-});
-
-test('it stores item correctly', async () => {
-    const id = 'something-not-a-uuid';
-    const name = 'A sample item';
-    const req = { body: { name } };
-    const res = { send: jest.fn() };
-
-    uuid.mockReturnValue(id);
-
-    await addItem(req, res);
-
-    const expectedItem = { id, name, completed: false };
-
-    expect(db.storeItem.mock.calls.length).toBe(1);
-    expect(db.storeItem.mock.calls[0][0]).toEqual(expectedItem);
-    expect(res.send.mock.calls[0].length).toBe(1);
-    expect(res.send.mock.calls[0][0]).toEqual(expectedItem);
-});
-
-test('it always generates a fresh id via uuid, even if the client supplies one', async () => {
-    const id = 'server-generated-id';
-    const req = { body: { id: 'client-supplied-id', name: 'Item' } };
-    const res = { send: jest.fn() };
-
-    uuid.mockReturnValue(id);
-
-    await addItem(req, res);
-
-    expect(db.storeItem.mock.calls[0][0].id).toBe(id);
-    expect(db.storeItem.mock.calls[0][0].id).not.toBe('client-supplied-id');
-});
-
-test('it always sets completed to false, even if the client sends completed: true', async () => {
-    const id = 'some-id';
-    const req = { body: { name: 'Item', completed: true } };
-    const res = { send: jest.fn() };
-
-    uuid.mockReturnValue(id);
-
-    await addItem(req, res);
-
-    expect(db.storeItem.mock.calls[0][0].completed).toBe(false);
-});
-
-test('it handles a missing name in the request body', async () => {
-    const id = 'some-id';
-    const req = { body: {} };
-    const res = { send: jest.fn() };
-
-    uuid.mockReturnValue(id);
-
-    await addItem(req, res);
-
-    expect(db.storeItem.mock.calls[0][0]).toEqual({
-        id,
-        name: undefined,
-        completed: false,
-    });
-});
-
-test('it handles an empty string as name', async () => {
-    const id = 'some-id';
-    const req = { body: { name: '' } };
-    const res = { send: jest.fn() };
-
-    uuid.mockReturnValue(id);
-
-    await addItem(req, res);
-
-    expect(db.storeItem.mock.calls[0][0].name).toBe('');
-});
-
-test('it propagates an error when the persistence layer fails to store the item', async () => {
-    const id = 'some-id';
-    const req = { body: { name: 'Item' } };
-    const res = { send: jest.fn() };
-
-    uuid.mockReturnValue(id);
-    db.storeItem.mockImplementation(() => {
-        throw new Error('storage failure');
+describe('POST /items', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
     });
 
-    await expect(addItem(req, res)).rejects.toThrow('storage failure');
-    expect(res.send).not.toHaveBeenCalled();
+    it('returns 201, creates a task, and publishes TaskCreated event on happy path', async () => {
+        const mockTask = { id: '123', name: 'New Task', completed: false };
+        (taskService.createTask as jest.Mock).mockResolvedValue(mockTask);
+        (eventBus.publish as jest.Mock).mockResolvedValue(true);
+
+        const res = await request(app).post('/items').send({ name: 'New Task' });
+
+        expect(res.status).toBe(201);
+        expect(res.body).toEqual(mockTask);
+        expect(eventBus.publish).toHaveBeenCalledWith('TaskCreated', mockTask);
+    });
+
+    it('returns 400 if name is missing or blank', async () => {
+        const res = await request(app).post('/items').send({ name: '   ' });
+        expect(res.status).toBe(400);
+        expect(taskService.createTask).not.toHaveBeenCalled();
+    });
+
+    it('returns 201 even if the event publish fails', async () => {
+        const mockTask = { id: '123', name: 'New Task', completed: false };
+        (taskService.createTask as jest.Mock).mockResolvedValue(mockTask);
+        (eventBus.publish as jest.Mock).mockRejectedValue(new Error('Broker down'));
+
+        const res = await request(app).post('/items').send({ name: 'New Task' });
+
+        expect(res.status).toBe(201);
+        expect(res.body).toEqual(mockTask);
+    });
+
+    it('returns 500 on storage failure', async () => {
+        (taskService.createTask as jest.Mock).mockRejectedValue(new Error('DB Error'));
+
+        const res = await request(app).post('/items').send({ name: 'New Task' });
+        expect(res.status).toBe(500);
+    });
 });

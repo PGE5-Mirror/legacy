@@ -26,12 +26,17 @@ const app = express();
 app.use(express.json());
 app.disable('x-powered-by');
 
-app.get('/health', (_req, res) => res.sendStatus(200));
+const staticPath = path.resolve(__dirname, '..', 'static');
 
+app.use(express.static(staticPath));
+
+app.get('/health', (_req, res) => res.sendStatus(200));
 app.use('/', itemsRoutes);
 app.use('/', authRoutes);
 
-app.use(express.static(path.join(__dirname, '/static')));
+app.get('/', (_req, res) => {
+    res.sendFile(path.resolve(staticPath, 'index.html'));
+});
 
 app.put('/projects/:id', verifyToken, updateProject);
 app.delete('/projects/:id', verifyToken, deleteProject);

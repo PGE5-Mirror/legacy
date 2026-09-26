@@ -10,7 +10,7 @@ export function App() {
     const [token, setToken] = useState<string>(() => localStorage.getItem('authToken') || '');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [cguAccepted, setCguAccepted] = useState(false);
+    const [tosAccepted, setToSAccepted] = useState(false);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [loading, setLoading] = useState(false);
@@ -22,8 +22,8 @@ export function App() {
         setError('');
         setSuccessMessage('');
 
-        if (isRegistering && !cguAccepted) {
-            setError('Vous devez accepter les conditions générales d’utilisation (CGU).');
+        if (isRegistering && !tosAccepted) {
+            setError('You had to accept the Terms of Service!');
             return;
         }
 
@@ -81,7 +81,7 @@ export function App() {
         setToken('');
         setEmail('');
         setPassword('');
-        setCguAccepted(false);
+        setToSAccepted(false);
         setError('');
         setSuccessMessage('');
         setShowProfile(false);
@@ -111,15 +111,15 @@ export function App() {
                             setEmail={setEmail}
                             password={password}
                             setPassword={setPassword}
-                            cguAccepted={cguAccepted}
-                            setCguAccepted={setCguAccepted}
+                            tosAccepted={tosAccepted}
+                            setToSAccepted={setToSAccepted}
                             onSubmit={handleAuth}
                             isRegistering={isRegistering}
                             toggleMode={() => {
                                 setIsRegistering(!isRegistering);
                                 setError('');
                                 setSuccessMessage('');
-                                setCguAccepted(false);
+                                setToSAccepted(false);
                             }}
                             error={error}
                             successMessage={successMessage}

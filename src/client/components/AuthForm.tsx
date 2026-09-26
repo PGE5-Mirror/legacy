@@ -67,7 +67,7 @@ export function AuthForm({
                             <Form.Check
                                 type="checkbox"
                                 id="tos-checkbox"
-                                label="J'accepte les conditions générales d'utilisation (tos)"
+                                label="I accept the Terms of Service"
                                 checked={tosAccepted}
                                 onChange={(e) => setToSAccepted(e.target.checked)}
                             />

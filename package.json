@@ -4,15 +4,15 @@
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/server/index.ts",
     "build": "npm run typecheck:frontend && npm run build:frontend && npm run build:backend",
     "migrate": "node-pg-migrate",
-    "start": "node-pg-migrate up && node dist/index.js",
+    "start": "node-pg-migrate up && node dist/server/index.js",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "SQLITE_DB_LOCATION=./test.db jest",
     "typecheck:frontend": "tsc --noEmit -p tsconfig.frontend.json",
-    "build:frontend": "esbuild src/frontend/app.tsx --bundle --minify --target=es2018 --outfile=src/static/dist/app.js",
+    "build:frontend": "esbuild src/client/app.tsx --bundle --minify --target=es2018 --outfile=src/static/dist/app.js",
     "build:backend": "tsc && cp -r src/static dist/static"
   },
   "dependencies": {

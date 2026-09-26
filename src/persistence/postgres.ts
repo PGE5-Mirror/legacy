@@ -7,6 +7,7 @@ import {
   NewOrganizationMember,
   OrganizationMemberUpdate,
 } from '../models/OrganizationMember';
+import { UserSettings, UserSettingsUpdate } from '../models/UserSettings';
 
 interface Task {
   id?: string;
@@ -236,6 +237,38 @@ async function getItemsByUserId(userId: string): Promise<Task[]> {
   return rows;
 }
 
+async function getUserSettings(userId: string): Promise<UserSettings | undefined> {
+  const { rows }: QueryResult<UserSettings> = await pool.query(
+    'SELECT * FROM user_settings WHERE user_id = $1',
+    [userId],
+  );
+  return rows[0];
+}
+
+async function upsertUserSettings(
+  userId: string,
+  settings: UserSettingsUpdate,
+): Promise<UserSettings> {
+  const existingSettings = await getUserSettings(userId);
+  if (existingSettings) {
+    const updatedSettings: UserSettingsUpdate = {
+      high_contrast: settings.high_contrast ?? existingSettings.high_contrast,
+      font_size: settings.font_size ?? existingSettings.font_size,
+    };
+    const { rows }: QueryResult<UserSettings> = await pool.query(
+      'UPDATE user_settings SET high_contrast = $1, font_size = $2, "updatedAt" = current_timestamp WHERE user_id = $3 RETURNING *',
+      [updatedSettings.high_contrast, updatedSettings.font_size, userId],
+    );
+    return rows[0];
+  } else {
+    const { rows }: QueryResult<UserSettings> = await pool.query(
+      'INSERT INTO user_settings (user_id, high_contrast, font_size) VALUES ($1, $2, $3) RETURNING *',
+      [userId, settings.high_contrast ?? false, settings.font_size ?? 'medium'],
+    );
+    return rows[0];
+  }
+}
+
 export {
   init,
   teardown,
@@ -247,4 +280,6 @@ export {
   removeItem,
   storeUser,
   getUser,
+  getUserSettings,
+  upsertUserSettings,
 };

@@ -2,6 +2,8 @@ import { Pool, QueryResult } from 'pg';
 import { Project, NewProject, ProjectUpdate } from '../models/Project';
 import { Column, NewColumn, ColumnUpdate } from '../models/Column';
 import { Organization, NewOrganization, OrganizationUpdate } from '../models/Organization';
+import { User, UserExport } from '../models/User';
+
 import {
   OrganizationMember,
   NewOrganizationMember,
@@ -13,13 +15,6 @@ interface Task {
   name: string;
   completed?: boolean;
   userId?: string;
-  createdAt?: Date;
-}
-
-interface User {
-  id?: string;
-  email: string;
-  password: string;
   createdAt?: Date;
 }
 
@@ -228,32 +223,37 @@ async function getUser(email: string): Promise<User | undefined> {
   return rows[0];
 }
 
-  async function getUserExportData(userId: string) {
-  const userQuery = await pool.query(
+export async function getUserById(id: string): Promise<UserExport | undefined> {
+  const { rows }: QueryResult<UserExport> = await pool.query(
       'SELECT id, email, "createdAt", tos_accepted_at, tos_version FROM users WHERE id = $1',
-      [userId]
+      [id],
   );
-  if (userQuery.rows.length === 0) return null;
-  const user = userQuery.rows[0];
+  return rows[0];
+}
 
-  const tasksQuery = await pool.query(
-      'SELECT id, name, completed, column_id, position, "createdAt" FROM tasks WHERE user_id = $1',
-      [userId]
-  );
-
-  const orgsQuery = await pool.query(
+async function getUserOrganizations(userId: string) {
+  const { rows } = await pool.query(
       `SELECT o.id, o.name, om.role, om."createdAt" as joined_at
      FROM organization_members om
      JOIN organizations o ON o.id = om.organization_id
      WHERE om.user_id = $1`,
-      [userId]
+      [userId],
   );
+  return rows;
+}
+
+async function getUserExportData(userId: string) {
+  const user = await getUserById(userId);
+  if (!user) return null;
+
+  const tasks = await getItemsByUserId(userId);
+  const organizations = await getUserOrganizations(userId);
 
   return {
-    user,
-    organizations: orgsQuery.rows,
-    tasks: tasksQuery.rows,
-    exportedAt: new Date().toISOString()
+    user: user,
+    organizations,
+    tasks,
+    exportedAt: new Date().toISOString(),
   };
 }
 

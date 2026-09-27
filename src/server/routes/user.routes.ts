@@ -4,6 +4,6 @@ import deleteAccount from './user/DeleteAccount';
 
 const router = Router();
 
-router.delete('/user/me', verifyToken, deleteAccount);
+router.delete('/users/me', verifyToken, deleteAccount);
 
 export default router;

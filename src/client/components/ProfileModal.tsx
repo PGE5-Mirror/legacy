@@ -21,7 +21,7 @@ export function ProfileModal({ show, onHide, token, onLogout }: ProfileModalProp
         setError('');
 
         try {
-            const res = await fetch('/api/users/me', {
+            const res = await fetch('/users/me', {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,

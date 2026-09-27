@@ -9,10 +9,25 @@ export const shorthands = undefined;
  * @returns {Promise<void> | void}
  */
 export const up = (pgm) => {
-  pgm.addColumn('tasks', {
-    user_id: {
+  pgm.createTable('projects', {
+    id: {
       type: 'uuid',
-      references: '"users"',
+      default: pgm.func('gen_random_uuid()'),
+      notNull: true,
+      primaryKey: true,
+    },
+    name: { type: 'varchar(255)', notNull: true },
+    createdAt: {
+      type: 'timestamp',
+      notNull: true,
+      default: pgm.func('current_timestamp'),
+    },
+  });
+
+  pgm.addColumn('columns', {
+    project_id: {
+      type: 'uuid',
+      references: '"projects"',
       onDelete: 'CASCADE',
       notNull: true,
     },
@@ -25,5 +40,6 @@ export const up = (pgm) => {
  * @returns {Promise<void> | void}
  */
 export const down = (pgm) => {
-  pgm.dropColumn('tasks', 'user_id');
+  pgm.dropColumn('columns', 'project_id');
+  pgm.dropTable('projects');
 };

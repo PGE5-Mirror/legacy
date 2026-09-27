@@ -20,6 +20,7 @@ import deleteOrganization from './routes/deleteOrganization';
 import getOrganizationMembers from './routes/getOrganizationMembers';
 import addOrganizationMember from './routes/addOrganizationMember';
 import deleteOrganizationMember from './routes/deleteOrganizationMember';
+import userRoutes from "./routes/user.routes";
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use(express.static(staticPath));
 app.get('/health', (_req, res) => res.sendStatus(200));
 app.use('/', itemsRoutes);
 app.use('/', authRoutes);
+app.use('/', userRoutes);
 
 app.get('/', (_req, res) => {
     res.sendFile(path.resolve(staticPath, 'index.html'));

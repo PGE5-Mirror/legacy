@@ -10,10 +10,42 @@ interface ProfileModalProps {
 
 export function ProfileModal({ show, onHide, token, onLogout }: ProfileModalProps) {
     const [deleting, setDeleting] = useState(false);
+    const [exporting, setExporting] = useState(false);
     const [error, setError] = useState('');
 
+    const handleExportData = async () => {
+        setExporting(true);
+        setError('');
+
+        try {
+            const res = await fetch('/users/me/export', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!res.ok) throw new Error('Could not export user data');
+
+            // Récupération du fichier JSON pour déclencher le téléchargement côté navigateur
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `user_data.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err: any) {
+            setError(err.message || 'An error occurred during export.');
+        } finally {
+            setExporting(false);
+        }
+    };
+
     const handleDeleteAccount = async () => {
-        if (!window.confirm("Are you sure you want to delete this account?")) {
+        if (!window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
             return;
         }
 
@@ -40,7 +72,7 @@ export function ProfileModal({ show, onHide, token, onLogout }: ProfileModalProp
     return (
         <Modal show={show} onHide={onHide} centered>
             <Modal.Header closeButton>
-                <Modal.Title>Mon Profil & Paramètres</Modal.Title>
+                <Modal.Title>My Profile & Settings</Modal.Title>
             </Modal.Header>
             <Modal.Body className="text-center p-4">
                 {error && <Alert variant="danger">{error}</Alert>}
@@ -49,17 +81,37 @@ export function ProfileModal({ show, onHide, token, onLogout }: ProfileModalProp
                     <i className="fa fa-user-circle fa-5x text-secondary" />
                 </div>
 
-                <p className="text-muted mb-4">Gestion des données personnelles (RGPD)</p>
+                <p className="text-muted mb-4">Personal Data Management (GDPR)</p>
 
-                <div className="d-grid gap-2 col-10 mx-auto">
-                    <Button variant="outline-primary" className="mb-2" onClick={() => { onHide(); onLogout(); }}>
-                        <i className="fa fa-sign-out-alt me-2" />
-                        Déconnexion
+                {/* Utilisation de flexbox Bootstrap pour aligner parfaitement tous les boutons */}
+                <div className="d-flex flex-column gap-3 col-10 mx-auto">
+                    <Button
+                        variant="outline-primary"
+                        onClick={handleExportData}
+                        disabled={exporting}
+                        className="d-flex align-items-center justify-content-center"
+                    >
+                        <i className="fa fa-download me-2" />
+                        {exporting ? 'Exporting...' : 'Export Personal Data'}
                     </Button>
 
-                    <Button variant="danger" onClick={handleDeleteAccount} disabled={deleting}>
+                    <Button
+                        variant="outline-secondary"
+                        onClick={() => { onHide(); onLogout(); }}
+                        className="d-flex align-items-center justify-content-center"
+                    >
+                        <i className="fa fa-sign-out-alt me-2" />
+                        Log out
+                    </Button>
+
+                    <Button
+                        variant="danger"
+                        onClick={handleDeleteAccount}
+                        disabled={deleting}
+                        className="d-flex align-items-center justify-content-center"
+                    >
                         <i className="fa fa-trash-alt me-2" />
-                        {deleting ? 'Deleting...' : 'Deleting my account'}
+                        {deleting ? 'Deleting...' : 'Delete my account'}
                     </Button>
                 </div>
             </Modal.Body>

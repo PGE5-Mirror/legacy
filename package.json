@@ -4,13 +4,16 @@
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc && cp -r src/static dist/static",
+    "dev": "ts-node-dev --respawn --transpile-only src/server/index.ts",
+    "build": "npm run typecheck:frontend && npm run build:frontend && npm run build:backend",
     "migrate": "node-pg-migrate",
-    "start": "node-pg-migrate up && node dist/index.js",
+    "start": "node-pg-migrate up && node dist/server/index.js",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "SQLITE_DB_LOCATION=./test.db jest"
+    "test": "SQLITE_DB_LOCATION=./test.db jest",
+    "typecheck:frontend": "tsc --noEmit -p tsconfig.frontend.json",
+    "build:frontend": "esbuild src/client/app.tsx --bundle --minify --target=es2018 --outfile=src/static/dist/app.js",
+    "build:backend": "tsc && cp -r src/static dist/static"
   },
   "dependencies": {
     "amqplib": "^2.0.1",
@@ -19,6 +22,9 @@
     "jsonwebtoken": "^9.0.3",
     "node-pg-migrate": "^9.0.0",
     "pg": "^8.23.0",
+    "react": "^16.14.0",
+    "react-bootstrap": "^1.6.8",
+    "react-dom": "^16.14.0",
     "uuid": "^13.0.0",
     "wait-port": "^1.1.0"
   },
@@ -30,7 +36,10 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.2",
     "@types/pg": "^8.23.1",
+    "@types/react": "^16.14.70",
+    "@types/react-dom": "^16.9.25",
     "dotenv": "^18.0.0",
+    "esbuild": "^0.25.0",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",

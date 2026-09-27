@@ -1,54 +1,37 @@
 import * as db from '../persistence';
-import { v4 as uuid } from 'uuid';
+import { NewTask, TaskUpdate } from '../models/Task';
 
-interface ItemData {
-  id?: string;
-  name: string;
-  completed?: boolean;
-  userId?: string;
-  createdAt?: Date;
-}
-
-async function createItem(data: ItemData) {
-  const item = {
-    id: uuid(),
-    name: data.name,
-    completed: false,
-    userId: data.userId,
-    createdAt: new Date(),
-  };
-  await db.storeItem(item);
-  return item;
+async function createItem(data: NewTask) {
+  return db.storeItem(data);
 }
 
 async function removeItem(id: string) {
-  const item = db.getItem(id);
+  const item = await db.getItem(id);
   await db.removeItem(id);
   return item;
 }
 
 async function getItemsByUserId(userId: string) {
-  const items = await db.getItemsByUserId(userId);
-  return items;
+  return db.getItemsByUserId(userId);
+}
+
+async function getItemsByColumnId(columnId: string) {
+  return db.getItemsByColumnId(columnId);
 }
 
 async function getItemById(id: string) {
-  const item = await db.getItem(id);
-  return item;
+  return db.getItem(id);
 }
 
-async function updateItem(data: ItemData) {
-  if (!data.id) {
-    throw new Error('Missing id for update');
-  }
-
-  await db.updateItem(data.id, {
-    name: data.name,
-    completed: data.completed,
-  });
-
-  const item = await db.getItem(data.id);
-  return item;
+async function updateItem(id: string, data: TaskUpdate) {
+  return db.updateItem(id, data);
 }
 
-export { createItem, removeItem, getItemsByUserId, getItemById, updateItem };
+export {
+  createItem,
+  removeItem,
+  getItemsByUserId,
+  getItemsByColumnId,
+  getItemById,
+  updateItem,
+};

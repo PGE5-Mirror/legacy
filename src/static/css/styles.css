@@ -37,3 +37,367 @@ body {
 button:focus {
   border: 1px solid #333;
 }
+
+/* TaskFlow Kanban dashboard */
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #f5f7fb;
+  color: #202336;
+  font-family: 'Lato', sans-serif;
+}
+
+.taskflow-app {
+  min-height: 100vh;
+  background: #f7f8fc;
+}
+
+.taskflow-header {
+  min-height: 68px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
+  background: linear-gradient(110deg, #2516d8, #674ee8);
+  box-shadow: 0 3px 16px rgba(45, 32, 190, 0.2);
+}
+
+.taskflow-logo {
+  font-size: 23px;
+  letter-spacing: -0.5px;
+}
+
+.taskflow-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.taskflow-header-actions input {
+  width: 240px;
+  height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.94);
+  color: #35374a;
+}
+
+.taskflow-icon-button,
+.taskflow-avatar {
+  border: 0;
+  color: #fff;
+  background: transparent;
+  cursor: pointer;
+}
+
+.taskflow-icon-button {
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+}
+
+.taskflow-avatar {
+  width: 39px;
+  height: 39px;
+  border: 3px solid rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+  background: #f4c66d;
+  color: #4a3195;
+}
+
+.taskflow-layout {
+  min-height: calc(100vh - 68px);
+  display: flex;
+}
+
+.taskflow-sidebar {
+  width: 230px;
+  flex: 0 0 230px;
+  padding: 25px 18px;
+  display: flex;
+  flex-direction: column;
+  background: #f0effc;
+  border-right: 1px solid #e5e4f2;
+}
+
+.taskflow-dashboard-link {
+  margin-bottom: 28px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  color: #3b2ad9;
+  background: #dcd8fa;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.taskflow-dashboard-link i,
+.taskflow-project i,
+.taskflow-sidebar-link i {
+  width: 22px;
+  margin-right: 5px;
+}
+
+.taskflow-sidebar-title {
+  margin: 0 10px 10px;
+  color: #9896ab;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.taskflow-project {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  color: #6f6e82;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.taskflow-project:hover,
+.taskflow-project.active {
+  color: #3524d6;
+  background: #e2dffa;
+}
+
+.taskflow-sidebar-spacer {
+  flex: 1;
+  min-height: 35px;
+}
+
+.taskflow-sidebar-link {
+  padding: 11px 12px;
+  color: #858397;
+  font-size: 14px;
+}
+
+.taskflow-main {
+  min-width: 0;
+  flex: 1;
+  padding: 30px;
+  overflow-x: auto;
+}
+
+.taskflow-board-heading {
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.taskflow-board-heading h1 {
+  margin: 0 0 5px;
+  color: #323348;
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.taskflow-board-heading p {
+  margin: 0;
+  color: #9899aa;
+}
+
+.taskflow-loading,
+.taskflow-empty {
+  padding: 45px;
+  border-radius: 14px;
+  background: #fff;
+  color: #898a9c;
+  text-align: center;
+}
+
+.kanban-board {
+  min-width: 850px;
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+}
+
+.kanban-column {
+  min-width: 280px;
+  min-height: 600px;
+  flex: 1;
+  padding: 20px;
+  border-radius: 20px;
+}
+
+.kanban-column-0 {
+  background: #e7eefc;
+}
+
+.kanban-column-1 {
+  background: #ddf8f8;
+}
+
+.kanban-column-2 {
+  background: #eaf8f2;
+}
+
+.kanban-column-heading {
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kanban-column-heading h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  color: #202336;
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.kanban-column-heading > span {
+  min-width: 25px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  color: #77798b;
+  background: rgba(255, 255, 255, 0.65);
+  font-size: 12px;
+  text-align: center;
+}
+
+.kanban-column-dot {
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  display: inline-block;
+  border-radius: 50%;
+  background: #2b2ad7;
+}
+
+.kanban-column-1 .kanban-column-dot {
+  background: #36cac5;
+}
+
+.kanban-column-2 .kanban-column-dot {
+  background: #19ad4a;
+}
+
+.kanban-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.kanban-task-card {
+  padding: 17px;
+  border: 1px solid rgba(220, 222, 235, 0.7);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(59, 63, 97, 0.07);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kanban-task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 24px rgba(59, 63, 97, 0.12);
+}
+
+.kanban-task-card h3 {
+  margin: 0 0 15px;
+  color: #252638;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.kanban-task-card label {
+  margin-bottom: 10px;
+  display: block;
+  color: #9293a3;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.kanban-task-card select {
+  width: 100%;
+  height: 34px;
+  margin-top: 5px;
+  padding: 0 8px;
+  border: 1px solid #e1e2ec;
+  border-radius: 7px;
+  color: #595b70;
+  background: #fafafe;
+  font-size: 12px;
+  text-transform: none;
+}
+
+.kanban-add-task {
+  width: 100%;
+  min-height: 72px;
+  margin-top: 18px;
+  border: 1px dashed rgba(83, 86, 113, 0.22);
+  border-radius: 11px;
+  color: #787a95;
+  background: rgba(255, 255, 255, 0.46);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.kanban-add-task:hover {
+  color: #3728d8;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.kanban-add-task i {
+  margin-right: 9px;
+}
+
+.taskflow-header button:focus,
+.taskflow-sidebar button:focus,
+.kanban-add-task:focus {
+  border-color: transparent;
+  outline: 2px solid rgba(70, 55, 220, 0.35);
+}
+
+@media (max-width: 900px) {
+  .taskflow-header {
+    padding: 0 16px;
+  }
+
+  .taskflow-header-actions input {
+    width: 170px;
+  }
+
+  .taskflow-sidebar {
+    display: none;
+  }
+
+  .taskflow-main {
+    padding: 20px 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .taskflow-header-actions input,
+  .taskflow-icon-button {
+    display: none;
+  }
+
+  .kanban-board {
+    min-width: 0;
+    flex-direction: column;
+  }
+
+  .kanban-column {
+    width: 100%;
+    min-height: auto;
+  }
+}

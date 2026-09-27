@@ -8,7 +8,7 @@ export default async function addItemController(
   res: Response,
 ): Promise<Response | void> {
   try {
-    const { name } = req.body;
+    const { name, column_id, assigned_to, position } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
@@ -19,10 +19,25 @@ export default async function addItemController(
       return res.status(400).json({ error: 'Missing title' });
     }
 
-    const createdTask = await createItem({ name, userId });
+    if (position !== undefined && (!Number.isInteger(position) || position < 0)) {
+      return res.status(400).json({ error: 'Position must be a positive integer' });
+    }
+
+    const createdTask = await createItem({
+      name: name.trim(),
+      user_id: userId,
+      column_id: column_id || null,
+      assigned_to: assigned_to || null,
+      position: position ?? 0,
+    });
 
     try {
-      await publishEvent('TaskCreated', { taskId: createdTask.id, name: createdTask.name });
+      await publishEvent('TaskCreated', {
+        taskId: createdTask.id,
+        name: createdTask.name,
+        columnId: createdTask.column_id,
+        assignedTo: createdTask.assigned_to,
+      });
     } catch (err) {
       console.error('Failed to publish TaskCreated event:', err);
     }

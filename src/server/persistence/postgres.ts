@@ -1,4 +1,5 @@
 import { Pool, QueryResult } from 'pg';
+import { Task, NewTask, TaskUpdate } from '../models/Task';
 import { Project, NewProject, ProjectUpdate } from '../models/Project';
 import { Column, NewColumn, ColumnUpdate } from '../models/Column';
 import { Organization, NewOrganization, OrganizationUpdate } from '../models/Organization';
@@ -9,14 +10,6 @@ import {
   NewOrganizationMember,
   OrganizationMemberUpdate,
 } from '../models/OrganizationMember';
-
-interface Task {
-  id?: string;
-  name: string;
-  completed?: boolean;
-  userId?: string;
-  createdAt?: Date;
-}
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -46,20 +39,66 @@ async function getItem(id: string): Promise<Task | undefined> {
   return rows[0];
 }
 
-async function storeItem(item: Task): Promise<Task> {
+async function getItemsByColumnId(columnId: string): Promise<Task[]> {
   const { rows }: QueryResult<Task> = await pool.query(
-    'INSERT INTO tasks (id, name, user_id) VALUES ($1, $2, $3) RETURNING *',
-    [item.id, item.name, item.userId],
+    `SELECT *
+     FROM tasks
+     WHERE column_id = $1
+     ORDER BY position ASC, "createdAt" ASC`,
+    [columnId],
   );
+
+  return rows;
+}
+
+async function storeItem(item: NewTask): Promise<Task> {
+  const { rows }: QueryResult<Task> = await pool.query(
+    `INSERT INTO tasks
+      (name, user_id, column_id, assigned_to, position)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING *`,
+    [
+      item.name,
+      item.user_id,
+      item.column_id ?? null,
+      item.assigned_to ?? null,
+      item.position ?? 0,
+    ],
+  );
+
   return rows[0];
 }
 
-async function updateItem(id: string, item: Task): Promise<void> {
-  await pool.query('UPDATE tasks SET name = $1, completed = $2 WHERE id = $3', [
-    item.name,
-    item.completed,
-    id,
-  ]);
+async function updateItem(id: string, item: TaskUpdate): Promise<Task | undefined> {
+  const fields: string[] = [];
+  const values: unknown[] = [];
+
+  const addField = (column: string, value: unknown) => {
+    values.push(value);
+    fields.push(`${column} = $${values.length}`);
+  };
+
+  if (item.name !== undefined) addField('name', item.name);
+  if (item.completed !== undefined) addField('completed', item.completed);
+  if (item.column_id !== undefined) addField('column_id', item.column_id);
+  if (item.assigned_to !== undefined) addField('assigned_to', item.assigned_to);
+  if (item.position !== undefined) addField('position', item.position);
+
+  if (fields.length === 0) {
+    return getItem(id);
+  }
+
+  values.push(id);
+
+  const { rows }: QueryResult<Task> = await pool.query(
+    `UPDATE tasks
+     SET ${fields.join(', ')}
+     WHERE id = $${values.length}
+     RETURNING *`,
+    values,
+  );
+
+  return rows[0];
 }
 
 async function removeItem(id: string): Promise<void> {
@@ -275,6 +314,7 @@ export {
   getItems,
   getItem,
   getItemsByUserId,
+  getItemsByColumnId,
   storeItem,
   updateItem,
   removeItem,

@@ -228,6 +228,35 @@ async function getUser(email: string): Promise<User | undefined> {
   return rows[0];
 }
 
+  async function getUserExportData(userId: string) {
+  const userQuery = await pool.query(
+      'SELECT id, email, "createdAt", tos_accepted_at, tos_version FROM users WHERE id = $1',
+      [userId]
+  );
+  if (userQuery.rows.length === 0) return null;
+  const user = userQuery.rows[0];
+
+  const tasksQuery = await pool.query(
+      'SELECT id, name, completed, column_id, position, "createdAt" FROM tasks WHERE user_id = $1',
+      [userId]
+  );
+
+  const orgsQuery = await pool.query(
+      `SELECT o.id, o.name, om.role, om."createdAt" as joined_at
+     FROM organization_members om
+     JOIN organizations o ON o.id = om.organization_id
+     WHERE om.user_id = $1`,
+      [userId]
+  );
+
+  return {
+    user,
+    organizations: orgsQuery.rows,
+    tasks: tasksQuery.rows,
+    exportedAt: new Date().toISOString()
+  };
+}
+
 async function deleteUser(id: string): Promise<void> {
   await pool.query('DELETE FROM users WHERE id = $1', [id]);
 }
@@ -251,5 +280,6 @@ export {
   removeItem,
   storeUser,
   getUser,
+  getUserExportData,
   deleteUser,
 };

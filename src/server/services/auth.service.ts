@@ -1,5 +1,5 @@
 import * as db from '../persistence';
-import { v4 as uuid } from 'uuid';
+import {v4 as uuid} from 'uuid';
 
 interface UserData {
   id?: string;
@@ -14,13 +14,11 @@ async function createUser(data: UserData) {
     email: data.email,
     password: data.password,
   };
-  const createdUser = await db.storeUser(user);
-  return createdUser;
+  return await db.storeUser(user);
 }
 
 async function getUserByEmail(email: string) {
-  const user = await db.getUser(email);
-  return user;
+  return await db.getUser(email);
 }
 
 export { getUserByEmail, createUser };

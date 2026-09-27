@@ -23,7 +23,7 @@ export function App() {
         setSuccessMessage('');
 
         if (isRegistering && !tosAccepted) {
-            setError('You had to accept the Terms of Service!');
+            setError('You must accept the Terms of Use!');
             return;
         }
 

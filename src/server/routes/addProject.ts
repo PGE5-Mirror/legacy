@@ -13,6 +13,7 @@ export default async (req: Request<{ id: string }>, res: Response): Promise<Resp
     const createdProject = await db.storeProject({ name, organization_id: id });
     return res.status(201).json(createdProject);
   } catch (err) {
-    return res.status(500).json(err);
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: message });
   }
 };

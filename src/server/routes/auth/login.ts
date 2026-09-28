@@ -29,6 +29,7 @@ export default async function login(req: Request, res: Response): Promise<Respon
       token,
     });
   } catch (err) {
-    return res.status(500).json(err);
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: message });
   }
 }

@@ -44,6 +44,7 @@ export default async function addItemController(
 
     return res.status(201).json(createdTask);
   } catch (err) {
-    return res.status(500).json(err);
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: message });
   }
 }

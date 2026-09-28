@@ -24,6 +24,7 @@ export default async (req: AuthenticatedRequest, res: Response): Promise<Respons
 
     return res.status(201).json(createdOrganization);
   } catch (err) {
-    return res.status(500).json(err);
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: message });
   }
 };

@@ -24,7 +24,7 @@ export default async function deleteItemController(
       return res.status(404).json({ message: 'Task not found' });
     }
 
-    if (existing.userId && existing.userId !== userId) {
+    if (existing.user_id !== userId) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 

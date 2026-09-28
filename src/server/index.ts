@@ -20,7 +20,9 @@ import deleteOrganization from './routes/deleteOrganization';
 import getOrganizationMembers from './routes/getOrganizationMembers';
 import addOrganizationMember from './routes/addOrganizationMember';
 import deleteOrganizationMember from './routes/deleteOrganizationMember';
-import userRoutes from "./routes/user.routes";
+import getUserSettings from './routes/getUserSettings';
+import updateUserSettings from './routes/updateUserSettings';
+import userRoutes from './routes/user.routes';
 
 const app = express();
 
@@ -59,6 +61,9 @@ app.delete('/organizations/:id/members/:memberId', verifyToken, deleteOrganizati
 
 app.get('/organizations/:id/projects', verifyToken, getProjects);
 app.post('/organizations/:id/projects', verifyToken, addProject);
+
+app.get('/users/me/settings', verifyToken, getUserSettings);
+app.put('/users/me/settings', verifyToken, updateUserSettings);
 
 db.init()
   .then(() => {

@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import deleteOrganizationController from '../../../src/server/routes/deleteOrganization';
 import * as db from '../../../src/server/persistence';
+import { createStandardControllerMocks } from '../../mockupUtils';
 
 jest.mock('../../../src/server/persistence', () => ({
   getOrganization: jest.fn(),
@@ -14,15 +15,11 @@ describe('deleteOrganizationController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockReq = {
+    const mocks = createStandardControllerMocks(mockReq = {
       params: { id: 'org-uuid-123' },
-    };
-
-    mockRes = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
-      sendStatus: jest.fn().mockReturnThis(),
-    };
+    });
+    mockReq = mocks.mockReq;
+    mockRes = mocks.mockRes;
   });
 
   it('should delete the organization successfully and return status 204', async () => {

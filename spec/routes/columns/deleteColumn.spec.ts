@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import deleteColumnController from '../../../src/server/routes/deleteColumn';
 import * as db from '../../../src/server/persistence';
+import { createStandardControllerMocks } from '../../mockupUtils';
 
 jest.mock('../../../src/server/persistence', () => ({
   getColumn: jest.fn(),
@@ -14,15 +15,11 @@ describe('deleteColumnController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockReq = {
+    const mocks = createStandardControllerMocks({
       params: { id: 'column-uuid-123' },
-    };
-
-    mockRes = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
-      sendStatus: jest.fn().mockReturnThis(),
-    };
+    });
+    mockReq = mocks.mockReq;
+    mockRes = mocks.mockRes;
   });
 
   it('should delete the column successfully and return status 204', async () => {

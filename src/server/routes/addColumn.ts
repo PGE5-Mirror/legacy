@@ -16,6 +16,7 @@ export default async (req: Request, res: Response): Promise<Response> => {
     const createdColumn = await db.storeColumn({ name, project_id });
     return res.status(201).json(createdColumn);
   } catch (err) {
-    return res.status(500).json(err);
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: message });
   }
 };

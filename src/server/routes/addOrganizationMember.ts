@@ -18,6 +18,7 @@ export default async (req: Request<{ id: string }>, res: Response): Promise<Resp
 
     return res.status(201).json(createdMember);
   } catch (err) {
-    return res.status(500).json(err);
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: message });
   }
 };

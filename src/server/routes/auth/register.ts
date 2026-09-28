@@ -26,6 +26,7 @@ export default async function register(req: Request, res: Response): Promise<Res
       createdAt: createdUser.createdAt,
     });
   } catch (err) {
-    return res.status(500).json(err);
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: message });
   }
 }

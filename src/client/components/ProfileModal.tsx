@@ -1,120 +1,190 @@
 import React, { useState } from 'react';
-import { Modal, Button, Alert } from 'react-bootstrap';
+import { Modal, Button, Alert, Form } from 'react-bootstrap';
+import { UserSettings } from '../types';
 
 interface ProfileModalProps {
-    show: boolean;
-    onHide: () => void;
-    token: string;
-    onLogout: () => void;
+  show: boolean;
+  onHide: () => void;
+  token: string;
+  onLogout: () => void;
+  settings: UserSettings;
+  setSettings: React.Dispatch<React.SetStateAction<UserSettings>>;
 }
 
-export function ProfileModal({ show, onHide, token, onLogout }: ProfileModalProps) {
-    const [deleting, setDeleting] = useState(false);
-    const [exporting, setExporting] = useState(false);
-    const [error, setError] = useState('');
+export function ProfileModal({
+  show,
+  onHide,
+  token,
+  onLogout,
+  settings,
+  setSettings,
+}: ProfileModalProps) {
+  const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState('');
 
-    const handleExportData = async () => {
-        setExporting(true);
-        setError('');
+  const updateSettings = async (changes: Partial<UserSettings>) => {
+    setError('');
 
-        try {
-            const res = await fetch('/users/me/export', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
+    try {
+      const res = await fetch('/users/me/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(changes),
+      });
 
-            if (!res.ok) throw new Error('Could not export user data');
+      if (!res.ok) throw new Error('Could not save settings');
 
-            // Récupération du fichier JSON pour déclencher le téléchargement côté navigateur
-            const blob = await res.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `user_data.json`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(url);
-        } catch (err: any) {
-            setError(err.message || 'An error occurred during export.');
-        } finally {
-            setExporting(false);
-        }
-    };
+      const updated: UserSettings = await res.json();
+      setSettings(updated);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while saving settings.');
+    }
+  };
 
-    const handleDeleteAccount = async () => {
-        if (!window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-            return;
-        }
+  const handleExportData = async () => {
+    setExporting(true);
+    setError('');
 
-        setDeleting(true);
-        setError('');
+    try {
+      const res = await fetch('/users/me/export', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        try {
-            const res = await fetch('/api/users/me', {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
+      if (!res.ok) throw new Error('Could not export user data');
 
-            if (!res.ok) throw new Error('Could not delete user');
-            onLogout();
-        } catch (err: any) {
-            setError(err.message || 'An error occurred.');
-            setDeleting(false);
-        }
-    };
+      // Récupération du fichier JSON pour déclencher le téléchargement côté navigateur
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `user_data.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during export.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
-    return (
-        <Modal show={show} onHide={onHide} centered>
-            <Modal.Header closeButton>
-                <Modal.Title>My Profile & Settings</Modal.Title>
-            </Modal.Header>
-            <Modal.Body className="text-center p-4">
-                {error && <Alert variant="danger">{error}</Alert>}
+  const handleDeleteAccount = async () => {
+    if (
+      !window.confirm('Are you sure you want to delete your account? This action cannot be undone.')
+    ) {
+      return;
+    }
 
-                <div className="mb-4">
-                    <i className="fa fa-user-circle fa-5x text-secondary" />
-                </div>
+    setDeleting(true);
+    setError('');
 
-                <p className="text-muted mb-4">Personal Data Management (GDPR)</p>
+    try {
+      const res = await fetch('/api/users/me', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-                {/* Utilisation de flexbox Bootstrap pour aligner parfaitement tous les boutons */}
-                <div className="d-flex flex-column gap-3 col-10 mx-auto">
-                    <Button
-                        variant="outline-primary"
-                        onClick={handleExportData}
-                        disabled={exporting}
-                        className="d-flex align-items-center justify-content-center"
-                    >
-                        <i className="fa fa-download me-2" />
-                        {exporting ? 'Exporting...' : 'Export Personal Data'}
-                    </Button>
+      if (!res.ok) throw new Error('Could not delete user');
+      onLogout();
+    } catch (err: any) {
+      setError(err.message || 'An error occurred.');
+      setDeleting(false);
+    }
+  };
 
-                    <Button
-                        variant="outline-secondary"
-                        onClick={() => { onHide(); onLogout(); }}
-                        className="d-flex align-items-center justify-content-center"
-                    >
-                        <i className="fa fa-sign-out-alt me-2" />
-                        Log out
-                    </Button>
+  return (
+    <Modal show={show} onHide={onHide} centered>
+      <Modal.Header closeButton>
+        <Modal.Title>My Profile & Settings</Modal.Title>
+      </Modal.Header>
+      <Modal.Body className="text-center p-4">
+        {error && <Alert variant="danger">{error}</Alert>}
 
-                    <Button
-                        variant="danger"
-                        onClick={handleDeleteAccount}
-                        disabled={deleting}
-                        className="d-flex align-items-center justify-content-center"
-                    >
-                        <i className="fa fa-trash-alt me-2" />
-                        {deleting ? 'Deleting...' : 'Delete my account'}
-                    </Button>
-                </div>
-            </Modal.Body>
-        </Modal>
-    );
+        <div className="mb-4">
+          <i className="fa fa-user-circle fa-5x text-secondary" />
+        </div>
+
+        <p className="text-muted mb-3">Accessibility Settings</p>
+
+        <div className="col-10 mx-auto mb-4 border rounded p-3">
+          <div className="d-flex align-items-center justify-content-between mb-3">
+            <span className="fw-semibold">High-contrast mode</span>
+            <Form.Check
+              type="switch"
+              id="high-contrast-switch"
+              checked={settings.high_contrast}
+              onChange={(event) => updateSettings({ high_contrast: event.target.checked })}
+              className="mb-0"
+            />
+          </div>
+
+          <div className="d-flex align-items-center justify-content-between">
+            <span className="fw-semibold">Font size</span>
+            <Form.Control
+              as="select"
+              value={settings.font_size}
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                updateSettings({
+                  font_size: event.target.value as UserSettings['font_size'],
+                })
+              }
+              style={{ width: 'auto' }}
+            >
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </Form.Control>
+          </div>
+        </div>
+
+        <p className="text-muted mb-4">Personal Data Management (GDPR)</p>
+
+        {/* Utilisation de flexbox Bootstrap pour aligner parfaitement tous les boutons */}
+        <div className="d-flex flex-column gap-3 col-10 mx-auto">
+          <Button
+            variant="outline-primary"
+            onClick={handleExportData}
+            disabled={exporting}
+            className="d-flex align-items-center justify-content-center"
+          >
+            <i className="fa fa-download me-2" />
+            {exporting ? 'Exporting...' : 'Export Personal Data'}
+          </Button>
+
+          <Button
+            variant="outline-secondary"
+            onClick={() => {
+              onHide();
+              onLogout();
+            }}
+            className="d-flex align-items-center justify-content-center"
+          >
+            <i className="fa fa-sign-out-alt me-2" />
+            Log out
+          </Button>
+
+          <Button
+            variant="danger"
+            onClick={handleDeleteAccount}
+            disabled={deleting}
+            className="d-flex align-items-center justify-content-center"
+          >
+            <i className="fa fa-trash-alt me-2" />
+            {deleting ? 'Deleting...' : 'Delete my account'}
+          </Button>
+        </div>
+      </Modal.Body>
+    </Modal>
+  );
 }

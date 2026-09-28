@@ -302,7 +302,9 @@ body {
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 5px 18px rgba(59, 63, 97, 0.07);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .kanban-task-card:hover {
@@ -348,7 +350,9 @@ body {
   color: #787a95;
   background: rgba(255, 255, 255, 0.46);
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .kanban-add-task:hover {
@@ -400,4 +404,123 @@ body {
     width: 100%;
     min-height: auto;
   }
+}
+
+/* Accessibility settings */
+
+body[data-font-size='small'] {
+  font-size: 13px;
+}
+
+body[data-font-size='medium'] {
+  font-size: 16px;
+}
+
+body[data-font-size='large'] {
+  font-size: 20px;
+}
+
+body[data-theme='high-contrast'] {
+  background: #000;
+  color: #fff;
+}
+
+body[data-theme='high-contrast'] .taskflow-app,
+body[data-theme='high-contrast'] .taskflow-main {
+  background: #000;
+}
+
+body[data-theme='high-contrast'] .taskflow-header {
+  background: #000;
+  border-bottom: 2px solid #fff;
+  box-shadow: none;
+}
+
+body[data-theme='high-contrast'] .taskflow-sidebar {
+  background: #000;
+  border-right: 2px solid #fff;
+}
+
+body[data-theme='high-contrast'] .taskflow-sidebar-link,
+body[data-theme='high-contrast'] .taskflow-sidebar-title,
+body[data-theme='high-contrast'] .taskflow-board-heading p {
+  color: #fff;
+}
+
+body[data-theme='high-contrast'] .taskflow-project {
+  color: #fff;
+  border: 1px solid #fff;
+}
+
+body[data-theme='high-contrast'] .taskflow-project:hover,
+body[data-theme='high-contrast'] .taskflow-project.active {
+  color: #000;
+  background: #fff;
+}
+
+body[data-theme='high-contrast'] .kanban-column-0,
+body[data-theme='high-contrast'] .kanban-column-1,
+body[data-theme='high-contrast'] .kanban-column-2 {
+  background: #000;
+  border: 2px solid #fff;
+}
+
+body[data-theme='high-contrast'] .kanban-column-0 {
+  border-color: #5ea1ff;
+}
+
+body[data-theme='high-contrast'] .kanban-column-1 {
+  border-color: #4de3de;
+}
+
+body[data-theme='high-contrast'] .kanban-column-2 {
+  border-color: #3ddc71;
+}
+
+body[data-theme='high-contrast'] .kanban-column-heading h2,
+body[data-theme='high-contrast'] .kanban-column-heading > span {
+  color: #fff;
+  background: #000;
+}
+
+body[data-theme='high-contrast'] .kanban-column-0 .kanban-column-dot {
+  background: #5ea1ff;
+}
+
+body[data-theme='high-contrast'] .kanban-column-1 .kanban-column-dot {
+  background: #4de3de;
+}
+
+body[data-theme='high-contrast'] .kanban-column-2 .kanban-column-dot {
+  background: #3ddc71;
+}
+
+body[data-theme='high-contrast'] .kanban-task-card {
+  background: #0d0d0d;
+  border: 2px solid #fff;
+  box-shadow: none;
+}
+
+/* The profile/settings modal always keeps its normal look, regardless of theme */
+body[data-theme='high-contrast'] .modal-content {
+  background: #fff;
+  color: #212529;
+}
+
+body[data-theme='high-contrast'] .kanban-task-card h3,
+body[data-theme='high-contrast'] .kanban-task-card label {
+  color: #fff;
+  font-weight: 800;
+}
+
+body[data-theme='high-contrast'] .kanban-add-task {
+  color: #fff;
+  border: 2px dashed #fff;
+  background: transparent;
+}
+
+body[data-theme='high-contrast'] a,
+body[data-theme='high-contrast'] .taskflow-dashboard-link {
+  color: #fff;
+  text-decoration: underline;
 }

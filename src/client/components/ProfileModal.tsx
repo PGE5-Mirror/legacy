@@ -1,24 +1,17 @@
 import React, { useState } from 'react';
 import { Modal, Button, Alert, Form } from 'react-bootstrap';
+import { apiFetch, apiRequest } from '../api';
 import { UserSettings } from '../types';
 
 interface ProfileModalProps {
   show: boolean;
   onHide: () => void;
-  token: string;
   onLogout: () => void;
   settings: UserSettings;
   setSettings: React.Dispatch<React.SetStateAction<UserSettings>>;
 }
 
-export function ProfileModal({
-  show,
-  onHide,
-  token,
-  onLogout,
-  settings,
-  setSettings,
-}: ProfileModalProps) {
+export function ProfileModal({ show, onHide, onLogout, settings, setSettings }: ProfileModalProps) {
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState('');
@@ -27,21 +20,14 @@ export function ProfileModal({
     setError('');
 
     try {
-      const res = await fetch('/users/me/settings', {
+      const updated = await apiRequest<UserSettings>('/users/me/settings', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify(changes),
       });
 
-      if (!res.ok) throw new Error('Could not save settings');
-
-      const updated: UserSettings = await res.json();
       setSettings(updated);
     } catch (err: any) {
-      setError(err.message || 'An error occurred while saving settings.');
+      setError(err.message);
     }
   };
 
@@ -50,14 +36,7 @@ export function ProfileModal({
     setError('');
 
     try {
-      const res = await fetch('/users/me/export', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) throw new Error('Could not export user data');
+      const res = await apiFetch('/users/me/export');
 
       // Récupération du fichier JSON pour déclencher le téléchargement côté navigateur
       const blob = await res.blob();
@@ -70,7 +49,7 @@ export function ProfileModal({
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (err: any) {
-      setError(err.message || 'An error occurred during export.');
+      setError(err.message);
     } finally {
       setExporting(false);
     }
@@ -87,18 +66,10 @@ export function ProfileModal({
     setError('');
 
     try {
-      const res = await fetch('/api/users/me', {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!res.ok) throw new Error('Could not delete user');
+      await apiRequest<void>('/users/me', { method: 'DELETE' });
       onLogout();
     } catch (err: any) {
-      setError(err.message || 'An error occurred.');
+      setError(err.message);
       setDeleting(false);
     }
   };

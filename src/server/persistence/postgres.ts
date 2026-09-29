@@ -11,6 +11,14 @@ import {
 } from '../models/OrganizationMember';
 import { UserSettings, UserSettingsUpdate } from '../models/UserSettings';
 
+interface Notification {
+  id?: string;
+  userId: string;
+  message: string;
+  read?: boolean;
+  createdAt?: Date;
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 10,
@@ -348,6 +356,22 @@ async function upsertUserSettings(
   }
 }
 
+async function createNotification(notification: Notification): Promise<Notification> {
+  const { rows }: QueryResult<Notification> = await pool.query(
+    'INSERT INTO notifications (id, user_id, message) VALUES ($1, $2, $3) RETURNING *',
+    [notification.id, notification.userId, notification.message],
+  );
+  return rows[0];
+}
+
+async function getNotificationsByUserId(userId: string): Promise<Notification[]> {
+  const { rows }: QueryResult<Notification> = await pool.query(
+    'SELECT * FROM notifications WHERE user_id = $1 ORDER BY "createdAt" DESC',
+    [userId],
+  );
+  return rows;
+}
+
 export {
   init,
   teardown,
@@ -365,4 +389,6 @@ export {
   upsertUserSettings,
   getUserExportData,
   deleteUser,
+  createNotification,
+  getNotificationsByUserId,
 };

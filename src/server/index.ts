@@ -23,6 +23,7 @@ import deleteOrganizationMember from './routes/deleteOrganizationMember';
 import getUserSettings from './routes/getUserSettings';
 import updateUserSettings from './routes/updateUserSettings';
 import userRoutes from './routes/user.routes';
+import notificationsRoutes from './routes/notifications.routes';
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.get('/health', (_req, res) => res.sendStatus(200));
 app.use('/', itemsRoutes);
 app.use('/', authRoutes);
 app.use('/', userRoutes);
+app.use('/', notificationsRoutes);
 
 app.get('/', (_req, res) => {
     res.sendFile(path.resolve(staticPath, 'index.html'));

@@ -4,3 +4,4 @@ dist/
 src/static/dist/
 test.db
 .package.json.swp
+*coverage/

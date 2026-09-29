@@ -35,6 +35,7 @@ export function KanbanBoard({ token, onOpenProfile }: KanbanBoardProps) {
     const [saving, setSaving] = useState(false);
     const [columnName, setColumnName] = useState('');
     const [users, setUsers] = useState<UserSummary[]>([]);
+    const [activeOrganization, setActiveOrganization] = useState<Organization | null>(null);
 
     const request = useCallback(
         async <T,>(url: string, options: RequestInit = {}): Promise<T> => {
@@ -106,6 +107,13 @@ export function KanbanBoard({ token, onOpenProfile }: KanbanBoardProps) {
             setActiveProject(project);
 
             try {
+                if (project.organization_id) {
+                    const memberList = await request<OrganizationMember[]>(
+                        `/organizations/${project.organization_id}/members`,
+                    );
+                    setMembers(memberList);
+                }
+
                 const projectColumns = await request<BoardColumn[]>(
                     `/columns?project_id=${encodeURIComponent(project.id)}`,
                 );
@@ -158,6 +166,7 @@ export function KanbanBoard({ token, onOpenProfile }: KanbanBoardProps) {
                 setOrganizations(organizationList);
 
                 const organization = organizationList[0];
+                setActiveOrganization(organization);
 
                 if (!organization) {
                     setError('No organization is available.');
@@ -361,9 +370,9 @@ export function KanbanBoard({ token, onOpenProfile }: KanbanBoardProps) {
                     <OrganizationManager
                         organizations={organizations}
                         request={request}
-                        onOrganizationCreated={(organization) =>
+                        onOrganizationCreated={(organization) => {
                             setOrganizations((current) => [...current, organization])
-                        }
+                        }}
                           onProjectCreated={(project) =>
                             setProjects((current) => [...current, project])
                         }

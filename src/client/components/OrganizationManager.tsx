@@ -17,6 +17,7 @@ interface OrganizationManagerProps {
   request: ApiRequest;
   onOrganizationCreated: (organization: Organization) => void;
   onProjectCreated: (project: Project) => void;
+  onOrganizationChange?: (organizationId: string) => void;
 }
 
 export function OrganizationManager({
@@ -24,6 +25,7 @@ export function OrganizationManager({
   request,
   onOrganizationCreated,
   onProjectCreated,
+  onOrganizationChange
 }: OrganizationManagerProps) {
   const [show, setShow] = useState(false);
   const [organizationName, setOrganizationName] = useState('');
@@ -112,6 +114,10 @@ export function OrganizationManager({
 
     try {
       await loadMembers(organizationId);
+
+      if (onOrganizationChange) {
+        onOrganizationChange(organizationId);
+      }
     } catch (err) {
       setError(
         err instanceof Error
@@ -203,7 +209,7 @@ export function OrganizationManager({
         {
           method: 'POST',
           body: JSON.stringify({
-            user_id: selectedUserId,
+            added_user_id: selectedUserId,
           }),
         },
       );

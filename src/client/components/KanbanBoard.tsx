@@ -6,7 +6,9 @@ import {
     Organization,
     OrganizationMember,
     Project,
+    UserSummary,
 } from '../types';
+import { OrganizationManager } from './OrganizationManager';
 
 interface KanbanBoardProps {
     token: string;
@@ -31,6 +33,9 @@ export function KanbanBoard({ token, onOpenProfile }: KanbanBoardProps) {
     const [taskName, setTaskName] = useState('');
     const [assignedTo, setAssignedTo] = useState('');
     const [saving, setSaving] = useState(false);
+    const [columnName, setColumnName] = useState('');
+    const [users, setUsers] = useState<UserSummary[]>([]);
+    const [activeOrganization, setActiveOrganization] = useState<Organization | null>(null);
 
     const request = useCallback(
         async <T,>(url: string, options: RequestInit = {}): Promise<T> => {
@@ -59,6 +64,42 @@ export function KanbanBoard({ token, onOpenProfile }: KanbanBoardProps) {
         [token],
     );
 
+    const createColumn = async (event: React.FormEvent) => {
+        event.preventDefault();
+
+        if (!activeProject || !columnName.trim()) return;
+
+        setSaving(true);
+        setError('');
+
+        try {
+            const createdColumn = await request<BoardColumn>('/columns', {
+            method: 'POST',
+            body: JSON.stringify({
+                name: columnName.trim(),
+                project_id: activeProject.id,
+            }),
+            });
+
+            setColumns((current) => [...current, createdColumn]);
+
+            setTasksByColumn((current) => ({
+            ...current,
+            [createdColumn.id]: [],
+            }));
+
+            setColumnName('');
+        } catch (err) {
+            setError(
+            err instanceof Error
+                ? err.message
+                : 'Unable to create column',
+            );
+        } finally {
+            setSaving(false);
+        }
+        };
+
     const loadProject = useCallback(
         async (project: Project) => {
             setLoading(true);
@@ -66,6 +107,13 @@ export function KanbanBoard({ token, onOpenProfile }: KanbanBoardProps) {
             setActiveProject(project);
 
             try {
+                if (project.organization_id) {
+                    const memberList = await request<OrganizationMember[]>(
+                        `/organizations/${project.organization_id}/members`,
+                    );
+                    setMembers(memberList);
+                }
+
                 const projectColumns = await request<BoardColumn[]>(
                     `/columns?project_id=${encodeURIComponent(project.id)}`,
                 );
@@ -118,19 +166,22 @@ export function KanbanBoard({ token, onOpenProfile }: KanbanBoardProps) {
                 setOrganizations(organizationList);
 
                 const organization = organizationList[0];
+                setActiveOrganization(organization);
 
                 if (!organization) {
                     setError('No organization is available.');
                     return;
                 }
 
-                const [projectList, memberList] = await Promise.all([
+                const [projectList, memberList, userList] = await Promise.all([
                     request<Project[]>(`/organizations/${organization.id}/projects`),
                     request<OrganizationMember[]>(
                         `/organizations/${organization.id}/members`,
                     ),
+                    request<UserSummary[]>('/users'),
                 ]);
 
+                setUsers(userList);
                 setProjects(projectList);
                 setMembers(memberList);
 
@@ -253,8 +304,11 @@ export function KanbanBoard({ token, onOpenProfile }: KanbanBoardProps) {
         }
     };
 
+    const getMemberEmail = (userId: string) =>
+        users.find((user) => user.id === userId)?.email || 'Unknown user';
+
     const memberLabel = (userId: string) =>
-        `Member ${userId.slice(0, 8)}`;
+        users.find((user) => user.id === userId)?.email || 'Unknown user';
 
     return (
         <div className="taskflow-app">
@@ -313,6 +367,17 @@ export function KanbanBoard({ token, onOpenProfile }: KanbanBoardProps) {
                         </button>
                     ))}
 
+                    <OrganizationManager
+                        organizations={organizations}
+                        request={request}
+                        onOrganizationCreated={(organization) => {
+                            setOrganizations((current) => [...current, organization])
+                        }}
+                          onProjectCreated={(project) =>
+                            setProjects((current) => [...current, project])
+                        }
+                    />
+
                     <div className="taskflow-sidebar-spacer" />
 
                     <div className="taskflow-sidebar-link">
@@ -331,7 +396,36 @@ export function KanbanBoard({ token, onOpenProfile }: KanbanBoardProps) {
                             <h1>{activeProject?.name || 'Project board'}</h1>
                             <p>Kanban Board · {members.length} members</p>
                         </div>
-                    </div>
+
+                            {activeProject && (
+                            <form
+                                onSubmit={createColumn}
+                                className="taskflow-create-column"
+                            >
+                                <div className="taskflow-column-input">
+                                <i className="fa fa-columns" />
+
+                                <input
+                                    type="text"
+                                    value={columnName}
+                                    onChange={(event) => setColumnName(event.target.value)}
+                                    placeholder="New column name"
+                                    aria-label="New column name"
+                                    required
+                                />
+                                </div>
+
+                                <button
+                                type="submit"
+                                className="taskflow-add-column-button"
+                                disabled={saving || !columnName.trim()}
+                                >
+                                <i className="fa fa-plus" />
+                                {saving ? 'Adding...' : 'Add column'}
+                                </button>
+                            </form>
+                            )}
+                        </div>
 
                     {error && <div className="alert alert-danger">{error}</div>}
 

@@ -51,3 +51,8 @@ export interface UserSettings {
   font_size: 'small' | 'medium' | 'large';
   updatedAt?: string;
 }
+
+export interface UserSummary {
+  id: string;
+  email: string;
+}

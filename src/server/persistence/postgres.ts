@@ -3,8 +3,7 @@ import { Task, NewTask, TaskUpdate } from '../models/Task';
 import { Project, NewProject, ProjectUpdate } from '../models/Project';
 import { Column, NewColumn, ColumnUpdate } from '../models/Column';
 import { Organization, NewOrganization, OrganizationUpdate } from '../models/Organization';
-import { User, UserExport } from '../models/User';
-
+import { User, UserExport, UserSummary } from '../models/User';
 import {
   OrganizationMember,
   NewOrganizationMember,
@@ -271,6 +270,14 @@ async function getUser(email: string): Promise<User | undefined> {
   return rows[0];
 }
 
+async function getUsers(): Promise<UserSummary[]> {
+  const { rows }: QueryResult<UserSummary> = await pool.query(
+    'SELECT id, email FROM users ORDER BY email ASC',
+  );
+
+  return rows;
+}
+
 export async function getUserById(id: string): Promise<UserExport | undefined> {
   const { rows }: QueryResult<UserExport> = await pool.query(
       'SELECT id, email, "createdAt", tos_accepted_at, tos_version FROM users WHERE id = $1',
@@ -377,6 +384,7 @@ export {
   removeItem,
   storeUser,
   getUser,
+  getUsers,
   getUserSettings,
   upsertUserSettings,
   getUserExportData,

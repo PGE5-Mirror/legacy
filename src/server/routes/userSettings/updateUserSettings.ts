@@ -1,13 +1,15 @@
 import { Response } from 'express';
-import * as db from '../persistence';
-import { AuthenticatedRequest } from '../middlewares/auth.middleware';
+import { AuthenticatedRequest } from '../../middlewares/auth.middleware';
+import { updateUserSettings } from '../../services/userSettings.service';
 
 const FONT_SIZES = ['small', 'medium', 'large'];
 
-export default async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+export default async function updateUserSettingsController(req: AuthenticatedRequest, res: Response): Promise<Response> {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Access denied. Missing token.' });
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { high_contrast, font_size } = req.body;
@@ -20,7 +22,10 @@ export default async (req: AuthenticatedRequest, res: Response): Promise<Respons
       return res.status(400).json({ error: 'font_size must be small, medium or large' });
     }
 
-    const settings = await db.upsertUserSettings(req.user.id, { high_contrast, font_size });
+    const settings = await updateUserSettings(userId, {
+      high_contrast: high_contrast,
+      font_size: font_size,
+    });
     return res.status(200).json(settings);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

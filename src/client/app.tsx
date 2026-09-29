@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { Col, Container, Row } from 'react-bootstrap';
 
+import { apiRequest, consumeAuthMessage } from './api';
 import { AuthForm } from './components/AuthForm';
 import { KanbanBoard } from './components/KanbanBoard';
 import { ProfileModal } from './components/ProfileModal';
@@ -12,7 +13,7 @@ export function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [tosAccepted, setToSAccepted] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(() => consumeAuthMessage());
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -107,13 +108,11 @@ export function App() {
   useEffect(() => {
     if (!token) return;
 
-    fetch('/users/me/settings', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((response) => response.json())
-      .then((data: UserSettings) => setSettings(data))
-      .catch(() => {
-        // keep the defaults if the fetch fails
+    apiRequest<UserSettings>('/users/me/settings')
+      .then(setSettings)
+      .catch((err: Error) => {
+        // keep the default settings if they cannot be loaded
+        console.error(err.message);
       });
   }, [token]);
 
@@ -157,7 +156,6 @@ export function App() {
       <ProfileModal
         show={showProfile}
         onHide={() => setShowProfile(false)}
-        token={token}
         onLogout={handleLogout}
         settings={settings}
         setSettings={setSettings}

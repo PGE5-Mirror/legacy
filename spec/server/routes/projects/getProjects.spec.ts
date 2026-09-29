@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../../../../src/server/middlewares/auth.mi
 import getProjectsController from '../../../../src/server/routes/projects/getProjects';
 import * as projectsService from '../../../../src/server/services/projects.service';
 import * as organizationMembersService from '../../../../src/server/services/organizationMembers.service';
+import { createStandardControllerMocks } from '../../mockupUtils';
 
 jest.mock('uuid', () => ({
   v4: () => 'org-uuid-123',
@@ -23,15 +24,13 @@ describe('getProjectsController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockReq = {
+    const mocks = createStandardControllerMocks({
       params: { id: 'org-uuid-123' },
       user: { id: 'user-uuid-123', email: 'test@example.com' },
-    };
+    });
 
-    mockRes = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
-    };
+    mockReq = mocks.mockReq;
+    mockRes = mocks.mockRes;
   });
 
   it('should retrieve projects successfully and return status 200', async () => {

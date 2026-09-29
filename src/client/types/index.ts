@@ -54,3 +54,7 @@ export interface AppNotification {
   read: boolean;
   createdAt: string;
 }
+export interface UserSummary {
+  id: string;
+  email: string;
+}

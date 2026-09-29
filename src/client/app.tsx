@@ -150,7 +150,7 @@ export function App() {
           </Row>
         </Container>
       ) : (
-        <KanbanBoard onOpenProfile={() => setShowProfile(true)} />
+        <KanbanBoard token={token} onOpenProfile={() => setShowProfile(true)} />
       )}
 
       <ProfileModal

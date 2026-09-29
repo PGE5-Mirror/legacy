@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Form, Modal } from 'react-bootstrap';
 import { apiRequest as request } from '../api';
 import { BoardColumn, Item, Organization, OrganizationMember, Project } from '../types';
+import { NotificationBell } from './NotificationBell';
 
 interface KanbanBoardProps {
   onOpenProfile: () => void;
@@ -213,9 +214,7 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
             onChange={(event) => setSearch(event.target.value)}
           />
 
-          <button type="button" className="taskflow-icon-button" aria-label="Notifications">
-            <i className="fa fa-bell" />
-          </button>
+          <NotificationBell />
 
           <button
             type="button"

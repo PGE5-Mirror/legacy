@@ -46,3 +46,11 @@ export interface UserSettings {
   font_size: 'small' | 'medium' | 'large';
   updatedAt?: string;
 }
+
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}

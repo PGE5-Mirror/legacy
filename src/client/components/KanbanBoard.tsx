@@ -10,6 +10,7 @@ import {
 } from '../types';
 import { OrganizationManager } from './OrganizationManager';
 import { apiRequest as request } from '../api';
+import { NotificationBell } from './NotificationBell';
 
 interface KanbanBoardProps {
     token: string;
@@ -296,14 +297,7 @@ export function KanbanBoard({ token, onOpenProfile }: KanbanBoardProps) {
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                     />
-
-                    <button
-                        type="button"
-                        className="taskflow-icon-button"
-                        aria-label="Notifications"
-                    >
-                        <i className="fa fa-bell" />
-                    </button>
+                    <NotificationBell />
 
                     <button
                         type="button"

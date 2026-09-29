@@ -1,11 +1,19 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../../src/server/middlewares/auth.middleware';
-import addOrganizationController from '../../../src/server/routes/addOrganization';
-import * as db from '../../../src/server/persistence';
+import addOrganizationController from '../../../src/server/routes/organizations/addOrganization';
+import * as organizationService from '../../../src/server/services/organization.service';
+import * as organizationMembersService from '../../../src/server/services/organizationMembers.service';
 
-jest.mock('../../../src/server/persistence', () => ({
-  storeOrganization: jest.fn(),
-  storeOrganizationMember: jest.fn(),
+jest.mock('uuid', () => ({
+  v4: () => 'org-uuid-123',
+}));
+
+jest.mock('../../../src/server/services/organization.service', () => ({
+  createOrganization: jest.fn(),
+}));
+
+jest.mock('../../../src/server/services/organizationMembers.service', () => ({
+  createOrganizationMember: jest.fn(),
 }));
 
 describe('addOrganizationController', () => {
@@ -29,13 +37,13 @@ describe('addOrganizationController', () => {
   it('should create an organization and add user as admin, then return status 201', async () => {
     const mockOrg = { id: 'org-uuid-123', name: 'New Organization' };
 
-    (db.storeOrganization as jest.Mock).mockResolvedValue(mockOrg);
-    (db.storeOrganizationMember as jest.Mock).mockResolvedValue(undefined);
+    (organizationService.createOrganization as jest.Mock).mockResolvedValue(mockOrg);
+    (organizationMembersService.createOrganizationMember as jest.Mock).mockResolvedValue(undefined);
 
     await addOrganizationController(mockReq as AuthenticatedRequest, mockRes as Response);
 
-    expect(db.storeOrganization).toHaveBeenCalledWith({ name: 'New Organization' });
-    expect(db.storeOrganizationMember).toHaveBeenCalledWith({
+    expect(organizationService.createOrganization).toHaveBeenCalledWith({ name: 'New Organization' });
+    expect(organizationMembersService.createOrganizationMember).toHaveBeenCalledWith({
       organization_id: 'org-uuid-123',
       user_id: 'user-uuid-123',
       role: 'admin',
@@ -51,7 +59,7 @@ describe('addOrganizationController', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing name' });
-    expect(db.storeOrganization).not.toHaveBeenCalled();
+    expect(organizationService.createOrganization).not.toHaveBeenCalled();
   });
 
   it('should return 401 if user is not authenticated', async () => {
@@ -60,16 +68,16 @@ describe('addOrganizationController', () => {
     await addOrganizationController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(401);
-    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Access denied. Missing token.' });
-    expect(db.storeOrganization).not.toHaveBeenCalled();
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+    expect(organizationService.createOrganization).not.toHaveBeenCalled();
   });
 
   it('should return 500 if an error occurs', async () => {
-    (db.storeOrganization as jest.Mock).mockRejectedValue(new Error('Database error'));
+    (organizationService.createOrganization as jest.Mock).mockRejectedValue(new Error('Database error'));
 
     await addOrganizationController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
-    expect(mockRes.json).toHaveBeenCalledWith(expect.any(Error));
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });
   });
 });

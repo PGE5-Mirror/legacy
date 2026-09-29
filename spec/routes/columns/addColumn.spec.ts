@@ -1,13 +1,18 @@
 import { Response } from 'express';
-import addColumnController from '../../../src/server/routes/addColumn';
-import * as db from '../../../src/server/persistence';
+import { AuthenticatedRequest } from '../../../src/server/middlewares/auth.middleware';
+import addColumnController from '../../../src/server/routes/columns/addColumn';
+import * as columnsService from '../../../src/server/services/columns.service';
 
-jest.mock('../../../src/server/persistence', () => ({
-  storeColumn: jest.fn(),
+jest.mock('uuid', () => ({
+  v4: () => 'org-uuid-123',
+}));
+
+jest.mock('../../../src/server/services/columns.service', () => ({
+  createColumn: jest.fn(),
 }));
 
 describe('addColumnController', () => {
-  let mockReq: any;
+  let mockReq: Partial<AuthenticatedRequest>;
   let mockRes: Partial<Response>;
 
   beforeEach(() => {
@@ -15,6 +20,7 @@ describe('addColumnController', () => {
 
     mockReq = {
       body: { name: 'To Do', project_id: 'project-uuid-123' },
+      user: { id: 'user-uuid-123', email: 'test@example.com' },
     };
 
     mockRes = {
@@ -26,11 +32,11 @@ describe('addColumnController', () => {
   it('should create a column successfully and return status 201', async () => {
     const mockColumn = { id: 'column-uuid-123', name: 'To Do', project_id: 'project-uuid-123' };
 
-    (db.storeColumn as jest.Mock).mockResolvedValue(mockColumn);
+    (columnsService.createColumn as jest.Mock).mockResolvedValue(mockColumn);
 
-    await addColumnController(mockReq, mockRes as Response);
+    await addColumnController(mockReq as AuthenticatedRequest, mockRes as Response);
 
-    expect(db.storeColumn).toHaveBeenCalledWith({
+    expect(columnsService.createColumn).toHaveBeenCalledWith({
       name: 'To Do',
       project_id: 'project-uuid-123',
     });
@@ -38,32 +44,42 @@ describe('addColumnController', () => {
     expect(mockRes.json).toHaveBeenCalledWith(mockColumn);
   });
 
+  it('should return 401 if user is not authenticated', async () => {
+    mockReq.user = undefined;
+
+    await addColumnController(mockReq as AuthenticatedRequest, mockRes as Response);
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+    expect(columnsService.createColumn).not.toHaveBeenCalled();
+  });
+
   it('should return 400 if name is missing or empty', async () => {
     mockReq.body = { name: '', project_id: 'project-uuid-123' };
 
-    await addColumnController(mockReq, mockRes as Response);
+    await addColumnController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing name' });
-    expect(db.storeColumn).not.toHaveBeenCalled();
+    expect(columnsService.createColumn).not.toHaveBeenCalled();
   });
 
   it('should return 400 if project_id is missing', async () => {
     mockReq.body = { name: 'To Do', project_id: '' };
 
-    await addColumnController(mockReq, mockRes as Response);
+    await addColumnController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing project_id' });
-    expect(db.storeColumn).not.toHaveBeenCalled();
+    expect(columnsService.createColumn).not.toHaveBeenCalled();
   });
 
   it('should return 500 if an error occurs', async () => {
-    (db.storeColumn as jest.Mock).mockRejectedValue(new Error('Database error'));
+    (columnsService.createColumn as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await addColumnController(mockReq, mockRes as Response);
+    await addColumnController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
-    expect(mockRes.json).toHaveBeenCalledWith(expect.any(Error));
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });
   });
 });

@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import * as db from '../../persistence';
+import { getUsers } from '../../services/user.service';
 
-export default async function getUsers(
+export default async function getUsersController(
   _req: Request,
   res: Response,
 ): Promise<Response> {
   try {
-    const users = await db.getUsers();
+    const users = await getUsers();
     return res.status(200).json(users);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

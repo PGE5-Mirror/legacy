@@ -31,7 +31,14 @@ describe('addItemController', () => {
   });
 
   it('should create an item successfully, publish an event, and return status 201', async () => {
-    const mockCreatedTask = { id: 'task-uuid-123', name: 'Task', userId: 'user-uuid-123' };
+    const mockCreatedTask = { 
+      id: 'task-uuid-123', 
+      name: 'Task', 
+      user_id: 'user-uuid-123',
+      column_id: null,
+      assigned_to: null,
+      position: 0
+    };
     
     (createItem as jest.Mock).mockResolvedValue(mockCreatedTask);
     (publishEvent as jest.Mock).mockResolvedValue(undefined);
@@ -39,12 +46,21 @@ describe('addItemController', () => {
     await addItemController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(createItem).toHaveBeenCalledTimes(1);
-    expect(createItem).toHaveBeenCalledWith({ name: 'Task', userId: 'user-uuid-123' });
+    expect(createItem).toHaveBeenCalledWith({
+      name: 'Task',
+      user_id: 'user-uuid-123',
+      column_id: null,
+      assigned_to: null,
+      position: 0,
+    });
     
     expect(publishEvent).toHaveBeenCalledTimes(1);
     expect(publishEvent).toHaveBeenCalledWith('TaskCreated', {
       taskId: 'task-uuid-123',
       name: 'Task',
+      columnId: null,
+      assignedTo: null,
+      userId: 'user-uuid-123',
     });
 
     expect(mockRes.status).toHaveBeenCalledWith(201);
@@ -72,7 +88,14 @@ describe('addItemController', () => {
   });
 
   it('should proceed and return 201 even if event publication fails', async () => {
-    const mockCreatedTask = { id: 'task-uuid-123', name: 'Task', userId: 'user-uuid-123' };
+    const mockCreatedTask = { 
+      id: 'task-uuid-123', 
+      name: 'Task', 
+      user_id: 'user-uuid-123',
+      column_id: null,
+      assigned_to: null,
+      position: 0
+    };
     
     (createItem as jest.Mock).mockResolvedValue(mockCreatedTask);
     (publishEvent as jest.Mock).mockRejectedValue(new Error('RabbitMQ down'));
@@ -94,6 +117,6 @@ describe('addItemController', () => {
     await addItemController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
-    expect(mockRes.json).toHaveBeenCalledWith(expect.any(Error));
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'DB connection error' });
   });
 });

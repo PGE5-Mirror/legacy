@@ -1,5 +1,4 @@
 import * as db from '../../src/server/persistence';
-import { v4 as uuid } from 'uuid';
 import { createItem, removeItem, getItemsByUserId, getItemById, updateItem } from '../../src/server/services/items.service';
 
 jest.mock('../../src/server/persistence', () => ({
@@ -10,43 +9,22 @@ jest.mock('../../src/server/persistence', () => ({
   updateItem: jest.fn(),
 }));
 
-jest.mock('uuid', () => ({
-  v4: jest.fn(),
-}));
-
 describe('itemsService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('createItem', () => {
-    it('should create an item successfully with a generated uuid and default completed status', async () => {
-      const itemData = { name: 'Test Item', userId: 'user-123' };
-      const mockUuid = 'uuid-123';
+    it('should create an item successfully by calling db.storeItem', async () => {
+      const itemData = { name: 'Test Item', user_id: 'user-123' };
+      const mockCreatedItem = { id: 'uuid-123', ...itemData, completed: false };
 
-      (uuid as jest.Mock).mockReturnValue(mockUuid);
-      (db.storeItem as jest.Mock).mockResolvedValue(undefined);
+      (db.storeItem as jest.Mock).mockResolvedValue(mockCreatedItem);
 
       const result = await createItem(itemData);
 
-      expect(uuid).toHaveBeenCalledTimes(1);
-      expect(db.storeItem).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: mockUuid,
-          name: 'Test Item',
-          completed: false,
-          userId: 'user-123',
-          createdAt: expect.any(Date),
-        })
-      );
-      expect(result).toEqual(
-        expect.objectContaining({
-          id: mockUuid,
-          name: 'Test Item',
-          completed: false,
-          userId: 'user-123',
-        })
-      );
+      expect(db.storeItem).toHaveBeenCalledWith(itemData);
+      expect(result).toEqual(mockCreatedItem);
     });
   });
 
@@ -92,28 +70,16 @@ describe('itemsService', () => {
   });
 
   describe('updateItem', () => {
-    it('should update an item and return the updated version', async () => {
+    it('should update an item and return the result from db.updateItem', async () => {
       const updateData = { id: 'item-123', name: 'Updated Name', completed: true };
       const updatedItem = { id: 'item-123', name: 'Updated Name', completed: true };
 
-      (db.updateItem as jest.Mock).mockResolvedValue(undefined);
-      (db.getItem as jest.Mock).mockResolvedValue(updatedItem);
+      (db.updateItem as jest.Mock).mockResolvedValue(updatedItem);
 
-      const result = await updateItem(updateData);
+      const result = await updateItem(updateData.id, updateData);
 
-      expect(db.updateItem).toHaveBeenCalledWith('item-123', {
-        name: 'Updated Name',
-        completed: true,
-      });
-      expect(db.getItem).toHaveBeenCalledWith('item-123');
+      expect(db.updateItem).toHaveBeenCalledWith('item-123', updateData);
       expect(result).toEqual(updatedItem);
-    });
-
-    it('should throw an error if id is missing', async () => {
-      const updateData = { name: 'Updated Name' };
-
-      await expect(updateItem(updateData)).rejects.toThrow('Missing id for update');
-      expect(db.updateItem).not.toHaveBeenCalled();
     });
   });
 });

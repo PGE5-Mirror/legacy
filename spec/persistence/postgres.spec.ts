@@ -64,7 +64,7 @@ describe('PostgreSQL Persistence Layer', () => {
     });
 
     it('should get items by user id', async () => {
-      const mockItems = [{ id: 'task-1', name: 'Task 1', userId: 'user-1' }];
+      const mockItems = [{ id: 'task-1', name: 'Task 1', user_id: 'user-1' }];
       poolInstance.query.mockResolvedValueOnce({ rows: mockItems });
 
       const result = await postgres.getItemsByUserId('user-1');
@@ -76,28 +76,57 @@ describe('PostgreSQL Persistence Layer', () => {
       expect(result).toEqual(mockItems);
     });
 
+    it('should get items by column id', async () => {
+      const mockItems = [{ id: 'task-1', name: 'Task 1', column_id: 'col-1' }];
+      poolInstance.query.mockResolvedValueOnce({ rows: mockItems });
+
+      const result = await postgres.getItemsByColumnId('col-1');
+
+      expect(poolInstance.query).toHaveBeenCalledWith(
+        expect.stringContaining('FROM tasks'),
+        ['col-1']
+      );
+      expect(result).toEqual(mockItems);
+    });
+
     it('should store a new item', async () => {
-      const newItem = { id: 'task-1', name: 'New Task', userId: 'user-1' };
-      poolInstance.query.mockResolvedValueOnce({ rows: [newItem] });
+      const newItem = { name: 'New Task', user_id: 'user-1', column_id: 'col-1', assigned_to: 'user-2', position: 1 };
+      const storedItem = { id: 'task-1', ...newItem };
+      poolInstance.query.mockResolvedValueOnce({ rows: [storedItem] });
 
       const result = await postgres.storeItem(newItem);
 
       expect(poolInstance.query).toHaveBeenCalledWith(
-        'INSERT INTO tasks (id, name, user_id) VALUES ($1, $2, $3) RETURNING *',
-        ['task-1', 'New Task', 'user-1']
+        expect.stringContaining('INSERT INTO tasks'),
+        ['New Task', 'user-1', 'col-1', 'user-2', 1]
       );
-      expect(result).toEqual(newItem);
+      expect(result).toEqual(storedItem);
     });
 
-    it('should update an item', async () => {
-      poolInstance.query.mockResolvedValueOnce({ rows: [] });
+    it('should update an item with fields', async () => {
+      const updatedItem = { id: 'task-1', name: 'Updated Task', completed: true };
+      poolInstance.query.mockResolvedValueOnce({ rows: [updatedItem] });
 
-      await postgres.updateItem('task-1', { name: 'Updated Task', completed: true });
+      const result = await postgres.updateItem('task-1', { name: 'Updated Task', completed: true });
 
       expect(poolInstance.query).toHaveBeenCalledWith(
-        'UPDATE tasks SET name = $1, completed = $2 WHERE id = $3',
+        expect.stringContaining('UPDATE tasks'),
         ['Updated Task', true, 'task-1']
       );
+      expect(result).toEqual(updatedItem);
+    });
+
+    it('should return item when updating with no fields', async () => {
+      const mockItem = { id: 'task-1', name: 'Task 1' };
+      poolInstance.query.mockResolvedValueOnce({ rows: [mockItem] });
+
+      const result = await postgres.updateItem('task-1', {});
+
+      expect(poolInstance.query).toHaveBeenCalledWith(
+        'SELECT * FROM tasks WHERE id = $1',
+        ['task-1']
+      );
+      expect(result).toEqual(mockItem);
     });
 
     it('should remove an item', async () => {
@@ -416,6 +445,140 @@ describe('PostgreSQL Persistence Layer', () => {
         ['test@example.com']
       );
       expect(result).toEqual(mockUser);
+    });
+
+    it('should get all users summary', async () => {
+      const mockUsers = [{ id: 'user-1', email: 'test@example.com' }];
+      poolInstance.query.mockResolvedValueOnce({ rows: mockUsers });
+
+      const result = await postgres.getUsers();
+
+      expect(poolInstance.query).toHaveBeenCalledWith(
+        'SELECT id, email FROM users ORDER BY email ASC'
+      );
+      expect(result).toEqual(mockUsers);
+    });
+
+    it('should get user by id', async () => {
+      const mockUser = { id: 'user-1', email: 'test@example.com' };
+      poolInstance.query.mockResolvedValueOnce({ rows: [mockUser] });
+
+      const result = await postgres.getUserById('user-1');
+
+      expect(poolInstance.query).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT id, email'),
+        ['user-1']
+      );
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should delete a user', async () => {
+      poolInstance.query.mockResolvedValueOnce({ rows: [] });
+
+      await postgres.deleteUser('user-1');
+
+      expect(poolInstance.query).toHaveBeenCalledWith(
+        'DELETE FROM users WHERE id = $1',
+        ['user-1']
+      );
+    });
+
+    it('should get user export data when user exists', async () => {
+      const mockUser = { id: 'user-1', email: 'test@example.com' };
+      const mockTasks = [{ id: 'task-1', name: 'Task 1' }];
+      const mockOrgs = [{ id: 'org-1', name: 'Org 1' }];
+
+      poolInstance.query
+        .mockResolvedValueOnce({ rows: [mockUser] })
+        .mockResolvedValueOnce({ rows: mockTasks })
+        .mockResolvedValueOnce({ rows: mockOrgs });
+
+      const result = await postgres.getUserExportData('user-1');
+
+      expect(result).toEqual({
+        user: mockUser,
+        organizations: mockOrgs,
+        tasks: mockTasks,
+        exportedAt: expect.any(String),
+      });
+    });
+
+    it('should return null when getting export data for non-existent user', async () => {
+      poolInstance.query.mockResolvedValueOnce({ rows: [] });
+
+      const result = await postgres.getUserExportData('non-existent');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('User Settings operations', () => {
+    it('should get user settings', async () => {
+      const mockSettings = { user_id: 'user-1', high_contrast: true, font_size: 'large' };
+      poolInstance.query.mockResolvedValueOnce({ rows: [mockSettings] });
+
+      const result = await postgres.getUserSettings('user-1');
+
+      expect(poolInstance.query).toHaveBeenCalledWith(
+        'SELECT * FROM user_settings WHERE user_id = $1',
+        ['user-1']
+      );
+      expect(result).toEqual(mockSettings);
+    });
+
+    it('should update existing user settings when upserting', async () => {
+      const existingSettings = { user_id: 'user-1', high_contrast: false, font_size: 'medium' };
+      const updatedSettings = { user_id: 'user-1', high_contrast: true, font_size: 'medium' };
+
+      poolInstance.query
+        .mockResolvedValueOnce({ rows: [existingSettings] })
+        .mockResolvedValueOnce({ rows: [updatedSettings] });
+
+      const result = await postgres.upsertUserSettings('user-1', { high_contrast: true });
+
+      expect(poolInstance.query).toHaveBeenCalledTimes(2);
+      expect(result).toEqual(updatedSettings);
+    });
+
+    it('should insert new user settings when upserting if none exist', async () => {
+      const newSettings = { user_id: 'user-1', high_contrast: false, font_size: 'medium' };
+
+      poolInstance.query
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [newSettings] });
+
+      const result = await postgres.upsertUserSettings('user-1', {});
+
+      expect(poolInstance.query).toHaveBeenCalledTimes(2);
+      expect(result).toEqual(newSettings);
+    });
+  });
+
+  describe('Notifications operations', () => {
+    it('should create a notification', async () => {
+      const notification = { id: 'notif-1', userId: 'user-1', message: 'Hello' };
+      poolInstance.query.mockResolvedValueOnce({ rows: [notification] });
+
+      const result = await postgres.createNotification(notification);
+
+      expect(poolInstance.query).toHaveBeenCalledWith(
+        'INSERT INTO notifications (id, user_id, message) VALUES ($1, $2, $3) RETURNING *',
+        ['notif-1', 'user-1', 'Hello']
+      );
+      expect(result).toEqual(notification);
+    });
+
+    it('should get notifications by user id', async () => {
+      const mockNotifications = [{ id: 'notif-1', userId: 'user-1', message: 'Hello' }];
+      poolInstance.query.mockResolvedValueOnce({ rows: mockNotifications });
+
+      const result = await postgres.getNotificationsByUserId('user-1');
+
+      expect(poolInstance.query).toHaveBeenCalledWith(
+        'SELECT * FROM notifications WHERE user_id = $1 ORDER BY "createdAt" DESC',
+        ['user-1']
+      );
+      expect(result).toEqual(mockNotifications);
     });
   });
 });

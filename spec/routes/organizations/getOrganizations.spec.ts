@@ -1,9 +1,18 @@
 import { Response } from 'express';
-import getOrganizationsController from '../../../src/server/routes/getOrganizations';
+import getOrganizationsController from '../../../src/server/routes/organizations/getOrganizations';
 import * as db from '../../../src/server/persistence';
+import * as organizationMembersService from '../../../src/server/services/organizationMembers.service';
 
 jest.mock('../../../src/server/persistence', () => ({
   getOrganizations: jest.fn(),
+}));
+
+jest.mock('../../../src/server/services/organizationMembers.service', () => ({
+  getOrganizationMemberByOrganizationId: jest.fn(),
+}));
+
+jest.mock('uuid', () => ({
+  v4: () => 'org-uuid-123',
 }));
 
 describe('getOrganizationsController', () => {
@@ -13,7 +22,9 @@ describe('getOrganizationsController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockReq = {};
+    mockReq = {
+      user: { id: 'user-uuid-123' },
+    };
 
     mockRes = {
       status: jest.fn().mockReturnThis(),
@@ -21,24 +32,44 @@ describe('getOrganizationsController', () => {
     };
   });
 
-  it('should retrieve organizations successfully and return status 200', async () => {
+  it('should return 401 if user is not authenticated', async () => {
+    mockReq.user = undefined;
+
+    await getOrganizationsController(mockReq, mockRes as Response);
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+  });
+
+  it('should retrieve organizations successfully where user is a member and return status 200', async () => {
+    const mockOrganizations = [
+      { id: 'org-uuid-123', name: 'Test Org' },
+      { id: 'org-uuid-456', name: 'Other Org' },
+    ];
+    const mockMembers = [{ user_id: 'user-uuid-123' }];
+
+    (db.getOrganizations as jest.Mock).mockResolvedValue(mockOrganizations);
+    
+    (organizationMembersService.getOrganizationMemberByOrganizationId as jest.Mock)
+      .mockResolvedValueOnce(mockMembers)
+      .mockResolvedValueOnce([]);
+
+    await getOrganizationsController(mockReq, mockRes as Response);
+
+    expect(db.getOrganizations).toHaveBeenCalledTimes(1);
+    expect(organizationMembersService.getOrganizationMemberByOrganizationId).toHaveBeenCalledTimes(2);
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.json).toHaveBeenCalledWith([{ id: 'org-uuid-123', name: 'Test Org' }]);
+  });
+
+  it('should return an empty array if user has no matching organizations', async () => {
     const mockOrganizations = [{ id: 'org-uuid-123', name: 'Test Org' }];
 
     (db.getOrganizations as jest.Mock).mockResolvedValue(mockOrganizations);
+    (organizationMembersService.getOrganizationMemberByOrganizationId as jest.Mock).mockResolvedValue([]);
 
     await getOrganizationsController(mockReq, mockRes as Response);
 
-    expect(db.getOrganizations).toHaveBeenCalledTimes(1);
-    expect(mockRes.status).toHaveBeenCalledWith(200);
-    expect(mockRes.json).toHaveBeenCalledWith(mockOrganizations);
-  });
-
-  it('should return an empty array if no organizations are returned', async () => {
-    (db.getOrganizations as jest.Mock).mockResolvedValue(null);
-
-    await getOrganizationsController(mockReq, mockRes as Response);
-
-    expect(db.getOrganizations).toHaveBeenCalledTimes(1);
     expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(mockRes.json).toHaveBeenCalledWith([]);
   });

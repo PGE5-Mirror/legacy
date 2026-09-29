@@ -1,65 +1,84 @@
 import { Response } from 'express';
-import deleteProjectController from '../../../src/server/routes/deleteProject';
-import * as db from '../../../src/server/persistence';
-import { createStandardControllerMocks } from '../../mockupUtils';
+import { AuthenticatedRequest } from '../../../src/server/middlewares/auth.middleware';
+import deleteProjectController from '../../../src/server/routes/projects/deleteProject';
+import * as projectsService from '../../../src/server/services/projects.service';
 
-jest.mock('../../../src/server/persistence', () => ({
-  getProject: jest.fn(),
+jest.mock('uuid', () => ({
+  v4: () => 'org-uuid-123',
+}));
+
+jest.mock('../../../src/server/services/projects.service', () => ({
+  getProjectById: jest.fn(),
   removeProject: jest.fn(),
 }));
 
 describe('deleteProjectController', () => {
-  let mockReq: any;
+  let mockReq: Partial<AuthenticatedRequest>;
   let mockRes: Partial<Response>;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    const mocks = createStandardControllerMocks({
+    mockReq = {
       params: { id: 'project-uuid-123' },
-    });
-    mockReq = mocks.mockReq;
-    mockRes = mocks.mockRes;
+      user: { id: 'user-uuid-123', email: 'test@example.com' },
+    };
+
+    mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+      sendStatus: jest.fn().mockReturnThis(),
+    };
   });
 
   it('should delete the project successfully and return status 204', async () => {
     const mockProject = { id: 'project-uuid-123', name: 'Test Project' };
 
-    (db.getProject as jest.Mock).mockResolvedValue(mockProject);
-    (db.removeProject as jest.Mock).mockResolvedValue(undefined);
+    (projectsService.getProjectById as jest.Mock).mockResolvedValue(mockProject);
+    (projectsService.removeProject as jest.Mock).mockResolvedValue(undefined);
 
-    await deleteProjectController(mockReq, mockRes as Response);
+    await deleteProjectController(mockReq as AuthenticatedRequest, mockRes as Response);
 
-    expect(db.getProject).toHaveBeenCalledWith('project-uuid-123');
-    expect(db.removeProject).toHaveBeenCalledWith('project-uuid-123');
+    expect(projectsService.getProjectById).toHaveBeenCalledWith('project-uuid-123');
+    expect(projectsService.removeProject).toHaveBeenCalledWith('project-uuid-123');
     expect(mockRes.sendStatus).toHaveBeenCalledWith(204);
+  });
+
+  it('should return 401 if user is not authenticated', async () => {
+    mockReq.user = undefined;
+
+    await deleteProjectController(mockReq as AuthenticatedRequest, mockRes as Response);
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+    expect(projectsService.getProjectById).not.toHaveBeenCalled();
   });
 
   it('should return 404 if id is missing', async () => {
     mockReq.params = { id: '' };
 
-    await deleteProjectController(mockReq, mockRes as Response);
+    await deleteProjectController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(404);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing id' });
-    expect(db.getProject).not.toHaveBeenCalled();
+    expect(projectsService.getProjectById).not.toHaveBeenCalled();
   });
 
   it('should return 404 if the project does not exist', async () => {
-    (db.getProject as jest.Mock).mockResolvedValue(undefined);
+    (projectsService.getProjectById as jest.Mock).mockResolvedValue(undefined);
 
-    await deleteProjectController(mockReq, mockRes as Response);
+    await deleteProjectController(mockReq as AuthenticatedRequest, mockRes as Response);
 
-    expect(db.getProject).toHaveBeenCalledWith('project-uuid-123');
+    expect(projectsService.getProjectById).toHaveBeenCalledWith('project-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(404);
     expect(mockRes.json).toHaveBeenCalledWith({ message: 'Project not found' });
-    expect(db.removeProject).not.toHaveBeenCalled();
+    expect(projectsService.removeProject).not.toHaveBeenCalled();
   });
 
   it('should return 500 if an error occurs', async () => {
-    (db.getProject as jest.Mock).mockRejectedValue(new Error('Database error'));
+    (projectsService.getProjectById as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await deleteProjectController(mockReq, mockRes as Response);
+    await deleteProjectController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });

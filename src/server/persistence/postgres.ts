@@ -65,13 +65,7 @@ async function storeItem(item: NewTask): Promise<Task> {
       (name, user_id, column_id, assigned_to, position)
      VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
-    [
-      item.name,
-      item.user_id,
-      item.column_id ?? null,
-      item.assigned_to ?? null,
-      item.position ?? 0,
-    ],
+    [item.name, item.user_id, item.column_id ?? null, item.assigned_to ?? null, item.position ?? 0],
   );
 
   return rows[0];
@@ -280,19 +274,19 @@ async function getUsers(): Promise<UserSummary[]> {
 
 export async function getUserById(id: string): Promise<UserExport | undefined> {
   const { rows }: QueryResult<UserExport> = await pool.query(
-      'SELECT id, email, "createdAt", tos_accepted_at, tos_version FROM users WHERE id = $1',
-      [id],
+    'SELECT id, email, "createdAt", tos_accepted_at, tos_version FROM users WHERE id = $1',
+    [id],
   );
   return rows[0];
 }
 
 async function getUserOrganizations(userId: string) {
   const { rows } = await pool.query(
-      `SELECT o.id, o.name, om.role, om."createdAt" as joined_at
+    `SELECT o.id, o.name, om.role, om."createdAt" as joined_at
      FROM organization_members om
      JOIN organizations o ON o.id = om.organization_id
      WHERE om.user_id = $1`,
-      [userId],
+    [userId],
   );
   return rows;
 }

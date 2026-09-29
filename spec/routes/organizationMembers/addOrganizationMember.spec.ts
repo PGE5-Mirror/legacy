@@ -1,13 +1,18 @@
 import { Response } from 'express';
-import addOrganizationMemberController from '../../../src/server/routes/addOrganizationMember';
-import * as db from '../../../src/server/persistence';
+import { AuthenticatedRequest } from '../../../src/server/middlewares/auth.middleware';
+import addOrganizationMemberController from '../../../src/server/routes/organizationMembers/addOrganizationMember';
+import * as organizationMembersService from '../../../src/server/services/organizationMembers.service';
 
-jest.mock('../../../src/server/persistence', () => ({
-  storeOrganizationMember: jest.fn(),
+jest.mock('uuid', () => ({
+  v4: () => 'org-uuid-123',
+}));
+
+jest.mock('../../../src/server/services/organizationMembers.service', () => ({
+  createOrganizationMember: jest.fn(),
 }));
 
 describe('addOrganizationMemberController', () => {
-  let mockReq: any;
+  let mockReq: Partial<AuthenticatedRequest>;
   let mockRes: Partial<Response>;
 
   beforeEach(() => {
@@ -15,7 +20,8 @@ describe('addOrganizationMemberController', () => {
 
     mockReq = {
       params: { id: 'org-uuid-123' },
-      body: { user_id: 'user-uuid-123', role: 'admin' },
+      body: { added_user_id: 'user-uuid-123', role: 'admin' },
+      user: { id: 'user-uuid-123', email: 'test@example.com' },
     };
 
     mockRes = {
@@ -27,11 +33,11 @@ describe('addOrganizationMemberController', () => {
   it('should add an organization member successfully and return status 201', async () => {
     const mockCreatedMember = { id: 'member-123', organization_id: 'org-uuid-123', user_id: 'user-uuid-123', role: 'admin' };
 
-    (db.storeOrganizationMember as jest.Mock).mockResolvedValue(mockCreatedMember);
+    (organizationMembersService.createOrganizationMember as jest.Mock).mockResolvedValue(mockCreatedMember);
 
-    await addOrganizationMemberController(mockReq, mockRes as Response);
+    await addOrganizationMemberController(mockReq as AuthenticatedRequest, mockRes as Response);
 
-    expect(db.storeOrganizationMember).toHaveBeenCalledWith({
+    expect(organizationMembersService.createOrganizationMember).toHaveBeenCalledWith({
       organization_id: 'org-uuid-123',
       user_id: 'user-uuid-123',
       role: 'admin',
@@ -40,22 +46,32 @@ describe('addOrganizationMemberController', () => {
     expect(mockRes.json).toHaveBeenCalledWith(mockCreatedMember);
   });
 
+  it('should return 401 if user is not authenticated', async () => {
+    mockReq.user = undefined;
+
+    await addOrganizationMemberController(mockReq as AuthenticatedRequest, mockRes as Response);
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+    expect(organizationMembersService.createOrganizationMember).not.toHaveBeenCalled();
+  });
+
   it('should return 400 if user_id is missing', async () => {
     mockReq.body = { role: 'admin' };
 
-    await addOrganizationMemberController(mockReq, mockRes as Response);
+    await addOrganizationMemberController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing user_id' });
-    expect(db.storeOrganizationMember).not.toHaveBeenCalled();
+    expect(organizationMembersService.createOrganizationMember).not.toHaveBeenCalled();
   });
 
   it('should return 500 if an error occurs', async () => {
-    (db.storeOrganizationMember as jest.Mock).mockRejectedValue(new Error('Database error'));
+    (organizationMembersService.createOrganizationMember as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await addOrganizationMemberController(mockReq, mockRes as Response);
+    await addOrganizationMemberController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
-    expect(mockRes.json).toHaveBeenCalledWith(expect.any(Error));
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });
   });
 });

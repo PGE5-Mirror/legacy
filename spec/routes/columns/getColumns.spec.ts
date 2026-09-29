@@ -1,13 +1,18 @@
 import { Response } from 'express';
-import getColumnsController from '../../../src/server/routes/getColumns';
-import * as db from '../../../src/server/persistence';
+import { AuthenticatedRequest } from '../../../src/server/middlewares/auth.middleware';
+import getColumnsController from '../../../src/server/routes/columns/getColumns';
+import * as columnsService from '../../../src/server/services/columns.service';
 
-jest.mock('../../../src/server/persistence', () => ({
-  getColumns: jest.fn(),
+jest.mock('uuid', () => ({
+  v4: () => 'org-uuid-123',
+}));
+
+jest.mock('../../../src/server/services/columns.service', () => ({
+  getColumnsByProjectId: jest.fn(),
 }));
 
 describe('getColumnsController', () => {
-  let mockReq: any;
+  let mockReq: Partial<AuthenticatedRequest>;
   let mockRes: Partial<Response>;
 
   beforeEach(() => {
@@ -15,6 +20,7 @@ describe('getColumnsController', () => {
 
     mockReq = {
       query: {},
+      user: { id: 'user-uuid-123', email: 'test@example.com' },
     };
 
     mockRes = {
@@ -27,11 +33,11 @@ describe('getColumnsController', () => {
     mockReq.query = { project_id: 'project-uuid-123' };
     const mockColumns = [{ id: 'col-1', name: 'To Do', project_id: 'project-uuid-123' }];
 
-    (db.getColumns as jest.Mock).mockResolvedValue(mockColumns);
+    (columnsService.getColumnsByProjectId as jest.Mock).mockResolvedValue(mockColumns);
 
-    await getColumnsController(mockReq, mockRes as Response);
+    await getColumnsController(mockReq as AuthenticatedRequest, mockRes as Response);
 
-    expect(db.getColumns).toHaveBeenCalledWith('project-uuid-123');
+    expect(columnsService.getColumnsByProjectId).toHaveBeenCalledWith('project-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(mockRes.json).toHaveBeenCalledWith(mockColumns);
   });
@@ -39,29 +45,39 @@ describe('getColumnsController', () => {
   it('should retrieve columns successfully without project_id query and return status 200', async () => {
     const mockColumns = [{ id: 'col-1', name: 'To Do', project_id: 'project-uuid-123' }];
 
-    (db.getColumns as jest.Mock).mockResolvedValue(mockColumns);
+    (columnsService.getColumnsByProjectId as jest.Mock).mockResolvedValue(mockColumns);
 
-    await getColumnsController(mockReq, mockRes as Response);
+    await getColumnsController(mockReq as AuthenticatedRequest, mockRes as Response);
 
-    expect(db.getColumns).toHaveBeenCalledWith(undefined);
+    expect(columnsService.getColumnsByProjectId).toHaveBeenCalledWith('');
     expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(mockRes.json).toHaveBeenCalledWith(mockColumns);
   });
 
+  it('should return 401 if user is not authenticated', async () => {
+    mockReq.user = undefined;
+
+    await getColumnsController(mockReq as AuthenticatedRequest, mockRes as Response);
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+    expect(columnsService.getColumnsByProjectId).not.toHaveBeenCalled();
+  });
+
   it('should return an empty array if no columns are returned', async () => {
-    (db.getColumns as jest.Mock).mockResolvedValue(null);
+    (columnsService.getColumnsByProjectId as jest.Mock).mockResolvedValue(null);
 
-    await getColumnsController(mockReq, mockRes as Response);
+    await getColumnsController(mockReq as AuthenticatedRequest, mockRes as Response);
 
-    expect(db.getColumns).toHaveBeenCalledWith(undefined);
+    expect(columnsService.getColumnsByProjectId).toHaveBeenCalledWith('');
     expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(mockRes.json).toHaveBeenCalledWith([]);
   });
 
   it('should return 500 if an error occurs', async () => {
-    (db.getColumns as jest.Mock).mockRejectedValue(new Error('Database error'));
+    (columnsService.getColumnsByProjectId as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await getColumnsController(mockReq, mockRes as Response);
+    await getColumnsController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });

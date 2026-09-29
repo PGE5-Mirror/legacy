@@ -9,6 +9,7 @@ import {
     UserSummary,
 } from '../types';
 import { OrganizationManager } from './OrganizationManager';
+import { apiRequest as request } from '../api';
 
 interface KanbanBoardProps {
     token: string;
@@ -36,33 +37,6 @@ export function KanbanBoard({ token, onOpenProfile }: KanbanBoardProps) {
     const [columnName, setColumnName] = useState('');
     const [users, setUsers] = useState<UserSummary[]>([]);
     const [activeOrganization, setActiveOrganization] = useState<Organization | null>(null);
-
-    const request = useCallback(
-        async <T,>(url: string, options: RequestInit = {}): Promise<T> => {
-            const response = await fetch(url, {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                    ...(options.headers || {}),
-                },
-            });
-
-            if (response.status === 401) {
-                localStorage.removeItem('authToken');
-                window.location.reload();
-                throw new Error('Session expired');
-            }
-
-            if (!response.ok) {
-                const body = await response.json().catch(() => ({}));
-                throw new Error(body.error || 'Request failed');
-            }
-
-            return response.json() as Promise<T>;
-        },
-        [token],
-    );
 
     const createColumn = async (event: React.FormEvent) => {
         event.preventDefault();

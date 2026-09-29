@@ -11,11 +11,6 @@ export interface Item {
 
 export type ItemCallback = (item: Item) => void;
 
-export interface AuthHeaders {
-  'Content-Type': string;
-  Authorization: string;
-}
-
 export interface Organization {
   id: string;
   name: string;

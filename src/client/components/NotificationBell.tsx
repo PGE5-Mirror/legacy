@@ -5,18 +5,17 @@ import { AppNotification } from '../types';
 const REFRESH_INTERVAL_MS = 10000;
 const LAST_SEEN_KEY = 'notificationsLastSeen';
 
-function countNew(notifications: AppNotification[], lastSeen: string): number {
+function countNew(notifications: AppNotification[], lastSeen: number): number {
   if (!lastSeen) return notifications.length;
 
-  const lastSeenTime = new Date(lastSeen).getTime();
-  return notifications.filter((n) => new Date(n.createdAt).getTime() > lastSeenTime).length;
+  return notifications.filter((n) => new Date(n.createdAt).getTime() > lastSeen).length;
 }
 
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
-  const [lastSeen, setLastSeen] = useState(() => localStorage.getItem(LAST_SEEN_KEY) || '');
+  const [lastSeen, setLastSeen] = useState(() => Number(localStorage.getItem(LAST_SEEN_KEY)) || 0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(() => {
@@ -57,10 +56,11 @@ export function NotificationBell() {
   const toggle = () => {
     if (!open) {
       load();
-      // Store a server timestamp so the badge never depends on the browser's clock
-      const newest = notifications[0]?.createdAt;
-      if (newest) {
-        localStorage.setItem(LAST_SEEN_KEY, newest);
+      // Store a server timestamp so the badge never depends on the browser's clock,
+      // as a validated number so no raw server text ends up in localStorage
+      const newest = new Date(notifications[0]?.createdAt ?? '').getTime();
+      if (Number.isFinite(newest)) {
+        localStorage.setItem(LAST_SEEN_KEY, String(newest));
         setLastSeen(newest);
       }
     }

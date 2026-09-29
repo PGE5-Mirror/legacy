@@ -28,7 +28,7 @@ describe('getOrganizationMembersController', () => {
 
     (db.getOrganizationMembers as jest.Mock).mockResolvedValue(mockMembers);
 
-    await getOrganizationMembersController(mockReq, mockRes as Response);
+    await getOrganizationMembersController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getOrganizationMembers).toHaveBeenCalledWith('org-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -38,7 +38,7 @@ describe('getOrganizationMembersController', () => {
   it('should return an empty array if no members are returned', async () => {
     (db.getOrganizationMembers as jest.Mock).mockResolvedValue(null);
 
-    await getOrganizationMembersController(mockReq, mockRes as Response);
+    await getOrganizationMembersController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getOrganizationMembers).toHaveBeenCalledWith('org-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -48,7 +48,7 @@ describe('getOrganizationMembersController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.getOrganizationMembers as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await getOrganizationMembersController(mockReq, mockRes as Response);
+    await getOrganizationMembersController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });

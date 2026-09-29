@@ -29,7 +29,7 @@ describe('getColumnsController', () => {
 
     (db.getColumns as jest.Mock).mockResolvedValue(mockColumns);
 
-    await getColumnsController(mockReq, mockRes as Response);
+    await getColumnsController(mockReq as Request, mockRes as Response);
 
     expect(db.getColumns).toHaveBeenCalledWith('project-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -41,7 +41,7 @@ describe('getColumnsController', () => {
 
     (db.getColumns as jest.Mock).mockResolvedValue(mockColumns);
 
-    await getColumnsController(mockReq, mockRes as Response);
+    await getColumnsController(mockReq as Request, mockRes as Response);
 
     expect(db.getColumns).toHaveBeenCalledWith(undefined);
     expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -51,7 +51,7 @@ describe('getColumnsController', () => {
   it('should return an empty array if no columns are returned', async () => {
     (db.getColumns as jest.Mock).mockResolvedValue(null);
 
-    await getColumnsController(mockReq, mockRes as Response);
+    await getColumnsController(mockReq as Request, mockRes as Response);
 
     expect(db.getColumns).toHaveBeenCalledWith(undefined);
     expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -61,7 +61,7 @@ describe('getColumnsController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.getColumns as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await getColumnsController(mockReq, mockRes as Response);
+    await getColumnsController(mockReq as Request, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });

@@ -28,7 +28,7 @@ describe('deleteProjectController', () => {
     (db.getProject as jest.Mock).mockResolvedValue(mockProject);
     (db.removeProject as jest.Mock).mockResolvedValue(undefined);
 
-    await deleteProjectController(mockReq, mockRes as Response);
+    await deleteProjectController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getProject).toHaveBeenCalledWith('project-uuid-123');
     expect(db.removeProject).toHaveBeenCalledWith('project-uuid-123');
@@ -38,7 +38,7 @@ describe('deleteProjectController', () => {
   it('should return 404 if id is missing', async () => {
     mockReq.params = { id: '' };
 
-    await deleteProjectController(mockReq, mockRes as Response);
+    await deleteProjectController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(404);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing id' });
@@ -48,7 +48,7 @@ describe('deleteProjectController', () => {
   it('should return 404 if the project does not exist', async () => {
     (db.getProject as jest.Mock).mockResolvedValue(undefined);
 
-    await deleteProjectController(mockReq, mockRes as Response);
+    await deleteProjectController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getProject).toHaveBeenCalledWith('project-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(404);
@@ -59,7 +59,7 @@ describe('deleteProjectController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.getProject as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await deleteProjectController(mockReq, mockRes as Response);
+    await deleteProjectController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });

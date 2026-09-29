@@ -31,7 +31,7 @@ describe('deleteOrganizationMemberController', () => {
     (db.getOrganizationMember as jest.Mock).mockResolvedValue(mockMember);
     (db.removeOrganizationMember as jest.Mock).mockResolvedValue(undefined);
 
-    await deleteOrganizationMemberController(mockReq, mockRes as Response);
+    await deleteOrganizationMemberController(mockReq as Request<{ id: string; memberId: string }>, mockRes as Response);
 
     expect(db.getOrganizationMember).toHaveBeenCalledWith('member-uuid-123');
     expect(db.removeOrganizationMember).toHaveBeenCalledWith('member-uuid-123');
@@ -41,7 +41,7 @@ describe('deleteOrganizationMemberController', () => {
   it('should return 404 if the member does not exist', async () => {
     (db.getOrganizationMember as jest.Mock).mockResolvedValue(undefined);
 
-    await deleteOrganizationMemberController(mockReq, mockRes as Response);
+    await deleteOrganizationMemberController(mockReq as Request<{ id: string; memberId: string }>, mockRes as Response);
 
     expect(db.getOrganizationMember).toHaveBeenCalledWith('member-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(404);
@@ -52,7 +52,7 @@ describe('deleteOrganizationMemberController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.getOrganizationMember as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await deleteOrganizationMemberController(mockReq, mockRes as Response);
+    await deleteOrganizationMemberController(mockReq as Request<{ id: string; memberId: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });

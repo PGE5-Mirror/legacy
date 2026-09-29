@@ -28,7 +28,7 @@ describe('addColumnController', () => {
 
     (db.storeColumn as jest.Mock).mockResolvedValue(mockColumn);
 
-    await addColumnController(mockReq, mockRes as Response);
+    await addColumnController(mockReq as Request, mockRes as Response);
 
     expect(db.storeColumn).toHaveBeenCalledWith({
       name: 'To Do',
@@ -41,7 +41,7 @@ describe('addColumnController', () => {
   it('should return 400 if name is missing or empty', async () => {
     mockReq.body = { name: '', project_id: 'project-uuid-123' };
 
-    await addColumnController(mockReq, mockRes as Response);
+    await addColumnController(mockReq as Request, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing name' });
@@ -51,7 +51,7 @@ describe('addColumnController', () => {
   it('should return 400 if project_id is missing', async () => {
     mockReq.body = { name: 'To Do', project_id: '' };
 
-    await addColumnController(mockReq, mockRes as Response);
+    await addColumnController(mockReq as Request, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing project_id' });
@@ -61,9 +61,9 @@ describe('addColumnController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.storeColumn as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await addColumnController(mockReq, mockRes as Response);
+    await addColumnController(mockReq as Request, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
-    expect(mockRes.json).toHaveBeenCalledWith(expect.any(Error));
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });
   });
 });

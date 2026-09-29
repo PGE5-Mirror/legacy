@@ -29,7 +29,7 @@ describe('addProjectController', () => {
 
     (db.storeProject as jest.Mock).mockResolvedValue(mockProject);
 
-    await addProjectController(mockReq, mockRes as Response);
+    await addProjectController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.storeProject).toHaveBeenCalledWith({
       name: 'New Project',
@@ -42,7 +42,7 @@ describe('addProjectController', () => {
   it('should return 400 if name is missing or empty', async () => {
     mockReq.body = { name: '' };
 
-    await addProjectController(mockReq, mockRes as Response);
+    await addProjectController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing name' });
@@ -52,9 +52,9 @@ describe('addProjectController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.storeProject as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await addProjectController(mockReq, mockRes as Response);
+    await addProjectController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
-    expect(mockRes.json).toHaveBeenCalledWith(expect.any(Error));
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });
   });
 });

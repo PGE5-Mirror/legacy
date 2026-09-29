@@ -28,7 +28,7 @@ describe('deleteOrganizationController', () => {
     (db.getOrganization as jest.Mock).mockResolvedValue(mockOrg);
     (db.removeOrganization as jest.Mock).mockResolvedValue(undefined);
 
-    await deleteOrganizationController(mockReq, mockRes as Response);
+    await deleteOrganizationController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getOrganization).toHaveBeenCalledWith('org-uuid-123');
     expect(db.removeOrganization).toHaveBeenCalledWith('org-uuid-123');
@@ -38,7 +38,7 @@ describe('deleteOrganizationController', () => {
   it('should return 404 if id is missing', async () => {
     mockReq.params = { id: '' };
 
-    await deleteOrganizationController(mockReq, mockRes as Response);
+    await deleteOrganizationController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(404);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing id' });
@@ -48,7 +48,7 @@ describe('deleteOrganizationController', () => {
   it('should return 404 if the organization does not exist', async () => {
     (db.getOrganization as jest.Mock).mockResolvedValue(undefined);
 
-    await deleteOrganizationController(mockReq, mockRes as Response);
+    await deleteOrganizationController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getOrganization).toHaveBeenCalledWith('org-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(404);
@@ -59,7 +59,7 @@ describe('deleteOrganizationController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.getOrganization as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await deleteOrganizationController(mockReq, mockRes as Response);
+    await deleteOrganizationController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });

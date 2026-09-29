@@ -28,7 +28,7 @@ describe('getProjectsController', () => {
 
     (db.getProjects as jest.Mock).mockResolvedValue(mockProjects);
 
-    await getProjectsController(mockReq, mockRes as Response);
+    await getProjectsController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getProjects).toHaveBeenCalledWith('org-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -38,7 +38,7 @@ describe('getProjectsController', () => {
   it('should return an empty array if no projects are returned', async () => {
     (db.getProjects as jest.Mock).mockResolvedValue(null);
 
-    await getProjectsController(mockReq, mockRes as Response);
+    await getProjectsController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getProjects).toHaveBeenCalledWith('org-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -48,7 +48,7 @@ describe('getProjectsController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.getProjects as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await getProjectsController(mockReq, mockRes as Response);
+    await getProjectsController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });

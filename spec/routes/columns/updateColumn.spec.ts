@@ -35,7 +35,7 @@ describe('updateColumnController', () => {
       .mockResolvedValueOnce(updatedColumn);
     (db.updateColumn as jest.Mock).mockResolvedValue(undefined);
 
-    await updateColumnController(mockReq, mockRes as Response);
+    await updateColumnController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getColumn).toHaveBeenCalledWith('column-uuid-123');
     expect(db.updateColumn).toHaveBeenCalledWith('column-uuid-123', { name: 'In Progress', position: 1 });
@@ -46,7 +46,7 @@ describe('updateColumnController', () => {
   it('should return 404 if the column does not exist', async () => {
     (db.getColumn as jest.Mock).mockResolvedValue(undefined);
 
-    await updateColumnController(mockReq, mockRes as Response);
+    await updateColumnController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getColumn).toHaveBeenCalledWith('column-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(404);
@@ -57,7 +57,7 @@ describe('updateColumnController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.getColumn as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await updateColumnController(mockReq, mockRes as Response);
+    await updateColumnController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.send).toHaveBeenCalledWith({ error: 'Database error' });

@@ -26,7 +26,7 @@ describe('getOrganizationsController', () => {
 
     (db.getOrganizations as jest.Mock).mockResolvedValue(mockOrganizations);
 
-    await getOrganizationsController(mockReq, mockRes as Response);
+    await getOrganizationsController(mockReq as Request, mockRes as Response);
 
     expect(db.getOrganizations).toHaveBeenCalledTimes(1);
     expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -36,7 +36,7 @@ describe('getOrganizationsController', () => {
   it('should return an empty array if no organizations are returned', async () => {
     (db.getOrganizations as jest.Mock).mockResolvedValue(null);
 
-    await getOrganizationsController(mockReq, mockRes as Response);
+    await getOrganizationsController(mockReq as Request, mockRes as Response);
 
     expect(db.getOrganizations).toHaveBeenCalledTimes(1);
     expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -46,7 +46,7 @@ describe('getOrganizationsController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.getOrganizations as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await getOrganizationsController(mockReq, mockRes as Response);
+    await getOrganizationsController(mockReq as Request, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });

@@ -29,7 +29,7 @@ describe('addOrganizationMemberController', () => {
 
     (db.storeOrganizationMember as jest.Mock).mockResolvedValue(mockCreatedMember);
 
-    await addOrganizationMemberController(mockReq, mockRes as Response);
+    await addOrganizationMemberController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.storeOrganizationMember).toHaveBeenCalledWith({
       organization_id: 'org-uuid-123',
@@ -43,7 +43,7 @@ describe('addOrganizationMemberController', () => {
   it('should return 400 if user_id is missing', async () => {
     mockReq.body = { role: 'admin' };
 
-    await addOrganizationMemberController(mockReq, mockRes as Response);
+    await addOrganizationMemberController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing user_id' });
@@ -53,9 +53,9 @@ describe('addOrganizationMemberController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.storeOrganizationMember as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await addOrganizationMemberController(mockReq, mockRes as Response);
+    await addOrganizationMemberController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
-    expect(mockRes.json).toHaveBeenCalledWith(expect.any(Error));
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });
   });
 });

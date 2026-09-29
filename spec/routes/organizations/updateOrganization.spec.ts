@@ -35,7 +35,7 @@ describe('updateOrganizationController', () => {
       .mockResolvedValueOnce(updatedOrg);
     (db.updateOrganization as jest.Mock).mockResolvedValue(undefined);
 
-    await updateOrganizationController(mockReq, mockRes as Response);
+    await updateOrganizationController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getOrganization).toHaveBeenCalledWith('org-uuid-123');
     expect(db.updateOrganization).toHaveBeenCalledWith('org-uuid-123', { name: 'Updated Organization Name' });
@@ -46,7 +46,7 @@ describe('updateOrganizationController', () => {
   it('should return 404 if the organization does not exist', async () => {
     (db.getOrganization as jest.Mock).mockResolvedValue(undefined);
 
-    await updateOrganizationController(mockReq, mockRes as Response);
+    await updateOrganizationController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getOrganization).toHaveBeenCalledWith('org-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(404);
@@ -57,7 +57,7 @@ describe('updateOrganizationController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.getOrganization as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await updateOrganizationController(mockReq, mockRes as Response);
+    await updateOrganizationController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.send).toHaveBeenCalledWith({ error: 'Database error' });

@@ -28,7 +28,7 @@ describe('deleteColumnController', () => {
     (db.getColumn as jest.Mock).mockResolvedValue(mockColumn);
     (db.removeColumn as jest.Mock).mockResolvedValue(undefined);
 
-    await deleteColumnController(mockReq, mockRes as Response);
+    await deleteColumnController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getColumn).toHaveBeenCalledWith('column-uuid-123');
     expect(db.removeColumn).toHaveBeenCalledWith('column-uuid-123');
@@ -38,7 +38,7 @@ describe('deleteColumnController', () => {
   it('should return 404 if id is missing', async () => {
     mockReq.params = { id: '' };
 
-    await deleteColumnController(mockReq, mockRes as Response);
+    await deleteColumnController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(404);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing id' });
@@ -48,7 +48,7 @@ describe('deleteColumnController', () => {
   it('should return 404 if the column does not exist', async () => {
     (db.getColumn as jest.Mock).mockResolvedValue(undefined);
 
-    await deleteColumnController(mockReq, mockRes as Response);
+    await deleteColumnController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getColumn).toHaveBeenCalledWith('column-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(404);
@@ -59,7 +59,7 @@ describe('deleteColumnController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.getColumn as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await deleteColumnController(mockReq, mockRes as Response);
+    await deleteColumnController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });

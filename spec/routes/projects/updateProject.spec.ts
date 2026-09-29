@@ -35,7 +35,7 @@ describe('updateProjectController', () => {
       .mockResolvedValueOnce(updatedProject);
     (db.updateProject as jest.Mock).mockResolvedValue(undefined);
 
-    await updateProjectController(mockReq, mockRes as Response);
+    await updateProjectController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getProject).toHaveBeenCalledWith('project-uuid-123');
     expect(db.updateProject).toHaveBeenCalledWith('project-uuid-123', { name: 'Updated Project Name' });
@@ -46,7 +46,7 @@ describe('updateProjectController', () => {
   it('should return 404 if the project does not exist', async () => {
     (db.getProject as jest.Mock).mockResolvedValue(undefined);
 
-    await updateProjectController(mockReq, mockRes as Response);
+    await updateProjectController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(db.getProject).toHaveBeenCalledWith('project-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(404);
@@ -57,7 +57,7 @@ describe('updateProjectController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.getProject as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await updateProjectController(mockReq, mockRes as Response);
+    await updateProjectController(mockReq as Request<{ id: string }>, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.send).toHaveBeenCalledWith({ error: 'Database error' });

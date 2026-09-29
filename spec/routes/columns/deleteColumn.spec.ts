@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import deleteColumnController from '../../../src/server/routes/deleteColumn';
 import * as db from '../../../src/server/persistence';
 import { createStandardControllerMocks } from '../../mockupUtils';
@@ -9,7 +9,7 @@ jest.mock('../../../src/server/persistence', () => ({
 }));
 
 describe('deleteColumnController', () => {
-  let mockReq: any;
+  let mockReq: Partial<Request>;
   let mockRes: Partial<Response>;
 
   beforeEach(() => {

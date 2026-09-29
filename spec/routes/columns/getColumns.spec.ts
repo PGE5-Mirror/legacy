@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import getColumnsController from '../../../src/server/routes/getColumns';
 import * as db from '../../../src/server/persistence';
 
@@ -7,7 +7,7 @@ jest.mock('../../../src/server/persistence', () => ({
 }));
 
 describe('getColumnsController', () => {
-  let mockReq: any;
+  let mockReq: Partial<Request>;
   let mockRes: Partial<Response>;
 
   beforeEach(() => {

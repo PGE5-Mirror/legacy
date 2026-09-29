@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import getProjectsController from '../../../src/server/routes/getProjects';
 import * as db from '../../../src/server/persistence';
 
@@ -7,7 +7,7 @@ jest.mock('../../../src/server/persistence', () => ({
 }));
 
 describe('getProjectsController', () => {
-  let mockReq: any;
+  let mockReq: Partial<Request>;
   let mockRes: Partial<Response>;
 
   beforeEach(() => {

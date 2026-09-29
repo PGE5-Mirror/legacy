@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import getOrganizationMembersController from '../../../src/server/routes/getOrganizationMembers';
 import * as db from '../../../src/server/persistence';
 
@@ -7,7 +7,7 @@ jest.mock('../../../src/server/persistence', () => ({
 }));
 
 describe('getOrganizationMembersController', () => {
-  let mockReq: any;
+  let mockReq: Partial<Request>;
   let mockRes: Partial<Response>;
 
   beforeEach(() => {

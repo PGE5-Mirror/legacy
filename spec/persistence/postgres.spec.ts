@@ -12,11 +12,11 @@ jest.mock('pg', () => {
 });
 
 describe('PostgreSQL Persistence Layer', () => {
-  let poolInstance: any;
+  let poolInstance: { query: jest.Mock; end: jest.Mock };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    poolInstance = new (Pool as any)();
+    poolInstance = new (Pool as unknown as jest.Mock)();
   });
 
   describe('init and teardown', () => {

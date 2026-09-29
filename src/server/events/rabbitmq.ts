@@ -23,13 +23,13 @@ async function connect(): Promise<Channel> {
   return channel;
 }
 
-async function publishEvent(queueName: string, payload: any): Promise<void> {
+async function publishEvent<T>(queueName: string, payload: T): Promise<void> {
   const ch = await connect();
   await ch.assertQueue(queueName, { durable: true });
   ch.sendToQueue(queueName, Buffer.from(JSON.stringify(payload)), { persistent: true });
 }
 
-async function consumeEvent(queueName: string, onMessage: (data: any) => void): Promise<void> {
+async function consumeEvent<T>(queueName: string, onMessage: (data: T) => void): Promise<void> {
   const ch = await connect();
   await ch.assertQueue(queueName, { durable: true });
   ch.consume(queueName, (msg) => {

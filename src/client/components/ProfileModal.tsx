@@ -40,8 +40,8 @@ export function ProfileModal({
 
       const updated: UserSettings = await res.json();
       setSettings(updated);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred while saving settings.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred while saving settings.');
     }
   };
 
@@ -69,8 +69,8 @@ export function ProfileModal({
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during export.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred during export.');
     } finally {
       setExporting(false);
     }
@@ -97,8 +97,8 @@ export function ProfileModal({
 
       if (!res.ok) throw new Error('Could not delete user');
       onLogout();
-    } catch (err: any) {
-      setError(err.message || 'An error occurred.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred.');
       setDeleting(false);
     }
   };

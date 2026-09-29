@@ -41,7 +41,7 @@ app.use('/', userRoutes);
 app.use('/', notificationsRoutes);
 
 app.get('/', (_req, res) => {
-    res.sendFile(path.resolve(staticPath, 'index.html'));
+  res.sendFile(path.resolve(staticPath, 'index.html'));
 });
 
 app.put('/projects/:id', verifyToken, updateProject);

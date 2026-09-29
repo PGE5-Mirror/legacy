@@ -18,7 +18,7 @@ describe('updateItemController', () => {
     mockReq = {
       params: { id: 'item-uuid-123' },
       body: { name: 'Updated Name', completed: true },
-      user: { id: 'user-uuid-123' } as any,
+      user: { id: 'user-uuid-123', email: 'test@example.com' },
     };
 
     mockRes = {

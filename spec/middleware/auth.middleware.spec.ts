@@ -67,7 +67,7 @@ describe('verifyToken middleware', () => {
 
     verifyToken(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
-    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.status).toHaveBeenCalledWith(403);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Invalid or expired token' });
     expect(mockNext).not.toHaveBeenCalled();
   });

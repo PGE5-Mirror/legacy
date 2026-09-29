@@ -37,6 +37,7 @@ export default async function addItemController(
         name: createdTask.name,
         columnId: createdTask.column_id,
         assignedTo: createdTask.assigned_to,
+        userId: createdTask.user_id,
       });
     } catch (err) {
       console.error('Failed to publish TaskCreated event:', err);

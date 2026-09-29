@@ -11,11 +11,6 @@ export interface Item {
 
 export type ItemCallback = (item: Item) => void;
 
-export interface AuthHeaders {
-  'Content-Type': string;
-  Authorization: string;
-}
-
 export interface Organization {
   id: string;
   name: string;
@@ -50,4 +45,9 @@ export interface UserSettings {
   high_contrast: boolean;
   font_size: 'small' | 'medium' | 'large';
   updatedAt?: string;
+}
+
+export interface UserSummary {
+  id: string;
+  email: string;
 }

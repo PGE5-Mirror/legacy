@@ -18,6 +18,6 @@ export default async function deleteAccount(
   } catch (error) {
     console.log(error);
     const message = error instanceof Error ? error.message : String(error);
-    return res.status(401).json({ error: message });
+    return res.status(500).json({ error: message });
   }
 }

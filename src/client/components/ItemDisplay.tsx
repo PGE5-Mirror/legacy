@@ -1,30 +1,34 @@
-import React from 'react';
-import { Container, Row, Col, Button } from 'react-bootstrap';
-import { Item, ItemCallback, AuthHeaders } from '../types';
+import React, { useState } from 'react';
+import { Alert, Container, Row, Col, Button } from 'react-bootstrap';
+import { apiRequest } from '../api';
+import { Item, ItemCallback } from '../types';
 
 interface ItemDisplayProps {
   item: Item;
   onItemUpdate: ItemCallback;
   onItemRemoval: ItemCallback;
-  authHeaders: AuthHeaders;
 }
 
-export function ItemDisplay({ item, onItemUpdate, onItemRemoval, authHeaders }: ItemDisplayProps) {
+export function ItemDisplay({ item, onItemUpdate, onItemRemoval }: ItemDisplayProps) {
+  const [error, setError] = useState('');
+
   const toggleCompletion = () => {
-    fetch(`/items/${item.id}`, {
+    setError('');
+
+    apiRequest<Item>(`/items/${item.id}`, {
       method: 'PUT',
       body: JSON.stringify({ name: item.name, completed: !item.completed }),
-      headers: authHeaders as unknown as Record<string, string>,
     })
-      .then((r) => r.json() as Promise<Item>)
-      .then(onItemUpdate);
+      .then(onItemUpdate)
+      .catch((err: Error) => setError(err.message));
   };
 
   const removeItem = () => {
-    fetch(`/items/${item.id}`, {
-      method: 'DELETE',
-      headers: authHeaders as unknown as Record<string, string>,
-    }).then(() => onItemRemoval(item));
+    setError('');
+
+    apiRequest<void>(`/items/${item.id}`, { method: 'DELETE' })
+      .then(() => onItemRemoval(item))
+      .catch((err: Error) => setError(err.message));
   };
 
   return (
@@ -44,6 +48,11 @@ export function ItemDisplay({ item, onItemUpdate, onItemRemoval, authHeaders }: 
           </Button>
         </Col>
       </Row>
+      {error && (
+        <Alert variant="danger" className="mt-2 mb-0">
+          {error}
+        </Alert>
+      )}
     </Container>
   );
 }

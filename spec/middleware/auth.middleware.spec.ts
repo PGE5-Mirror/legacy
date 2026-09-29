@@ -66,14 +66,14 @@ describe('verifyToken middleware', () => {
     expect(mockNext).not.toHaveBeenCalled();
   });
 
-  it('should return 403 if token verification fails', async () => {
+  it('should return 401 if token verification fails', async () => {
     (jwt.verify as jest.Mock).mockImplementation(() => {
       throw new Error('Token expired');
     });
 
     await verifyToken(mockReq as AuthenticatedRequest, mockRes as Response, mockNext);
 
-    expect(mockRes.status).toHaveBeenCalledWith(403);
+    expect(mockRes.status).toHaveBeenCalledWith(401);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Invalid or expired token' });
     expect(mockNext).not.toHaveBeenCalled();
   });

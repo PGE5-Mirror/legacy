@@ -47,6 +47,13 @@ export interface UserSettings {
   updatedAt?: string;
 }
 
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
 export interface UserSummary {
   id: string;
   email: string;

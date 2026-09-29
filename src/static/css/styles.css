@@ -149,7 +149,7 @@ body {
 
 .taskflow-sidebar-title {
   margin: 0 10px 10px;
-  color: #9896ab;
+  color: #6a6978;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -161,7 +161,7 @@ body {
   padding: 10px 12px;
   border: 0;
   border-radius: 8px;
-  color: #6f6e82;
+  color: #6b6a7d;
   background: transparent;
   text-align: left;
   cursor: pointer;
@@ -180,7 +180,7 @@ body {
 
 .taskflow-sidebar-link {
   padding: 11px 12px;
-  color: #858397;
+  color: #6c6a7a;
   font-size: 14px;
 }
 
@@ -207,7 +207,7 @@ body {
 
 .taskflow-board-heading p {
   margin: 0;
-  color: #9899aa;
+  color: #6f707c;
 }
 
 .taskflow-loading,
@@ -215,7 +215,7 @@ body {
   padding: 45px;
   border-radius: 14px;
   background: #fff;
-  color: #898a9c;
+  color: #737483;
   text-align: center;
 }
 
@@ -267,7 +267,7 @@ body {
   min-width: 25px;
   padding: 3px 8px;
   border-radius: 20px;
-  color: #77798b;
+  color: #6d6f80;
   background: rgba(255, 255, 255, 0.65);
   font-size: 12px;
   text-align: center;
@@ -322,7 +322,7 @@ body {
 .kanban-task-card label {
   margin-bottom: 10px;
   display: block;
-  color: #9293a3;
+  color: #737481;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -333,7 +333,7 @@ body {
   height: 34px;
   margin-top: 5px;
   padding: 0 8px;
-  border: 1px solid #e1e2ec;
+  border: 1px solid #909197;
   border-radius: 7px;
   color: #595b70;
   background: #fafafe;
@@ -347,7 +347,7 @@ body {
   margin-top: 18px;
   border: 1px dashed rgba(83, 86, 113, 0.22);
   border-radius: 11px;
-  color: #787a95;
+  color: #6b6d85;
   background: rgba(255, 255, 255, 0.46);
   cursor: pointer;
   transition:
@@ -368,7 +368,11 @@ body {
 .taskflow-sidebar button:focus,
 .kanban-add-task:focus {
   border-color: transparent;
-  outline: 2px solid rgba(70, 55, 220, 0.35);
+  outline: 2px solid #4637dc;
+}
+
+.taskflow-header button:focus {
+  outline-color: #fff;
 }
 
 @media (max-width: 900px) {
@@ -443,6 +447,7 @@ body[data-theme='high-contrast'] .taskflow-sidebar {
 
 body[data-theme='high-contrast'] .taskflow-sidebar-link,
 body[data-theme='high-contrast'] .taskflow-sidebar-title,
+body[data-theme='high-contrast'] .taskflow-board-heading h1,
 body[data-theme='high-contrast'] .taskflow-board-heading p {
   color: #fff;
 }
@@ -523,4 +528,17 @@ body[data-theme='high-contrast'] a,
 body[data-theme='high-contrast'] .taskflow-dashboard-link {
   color: #fff;
   text-decoration: underline;
+}
+
+body[data-theme='high-contrast'] .taskflow-dashboard-link {
+  background: #000;
+  border: 2px solid #fff;
+}
+
+/* Scoped to the app so the white modals keep their normal focus style */
+body[data-theme='high-contrast'] .taskflow-app button:focus,
+body[data-theme='high-contrast'] .taskflow-app select:focus,
+body[data-theme='high-contrast'] .taskflow-app input:focus {
+  outline: 3px solid #ffd400;
+  outline-offset: 2px;
 }

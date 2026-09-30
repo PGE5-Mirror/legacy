@@ -15,12 +15,14 @@ import { NotificationBell } from './NotificationBell';
 import { OrganizationManager } from './OrganizationManager';
 
 interface KanbanBoardProps {
+  initialProjectId?: string;
+  onBackHome: () => void;
   onOpenProfile: () => void;
 }
 
 type TasksByColumn = Record<string, Item[]>;
 
-export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
+export function KanbanBoard({ initialProjectId, onBackHome, onOpenProfile }: KanbanBoardProps) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeOrganization, setActiveOrganization] = useState<Organization | null>(null);
@@ -76,6 +78,8 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
     setLoading(true);
     setError('');
     setActiveProject(project);
+
+    localStorage.setItem('lastProjectId', project.id);
 
     try {
       if (project.organization_id) {
@@ -142,6 +146,9 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
         setProjects(projectList);
         setMembers(memberList);
 
+        const selectedProject =
+          projectList.find((project) => project.id === initialProjectId) || projectList[0];
+
         if (projectList[0]) {
           await loadProject(projectList[0]);
         } else {
@@ -158,7 +165,7 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
     };
 
     void loadWorkspace();
-  }, [loadProject]);
+  }, [initialProjectId, loadProject]);
 
   const openTaskForm = (columnId: string) => {
     setSelectedColumnId(columnId);
@@ -334,7 +341,6 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
     <div className="taskflow-app">
       <header className="taskflow-header">
         <strong className="taskflow-logo">TaskFlow</strong>
-
         <div className="taskflow-header-actions">
           <input
             type="search"
@@ -356,10 +362,10 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
 
       <div className="taskflow-layout">
         <aside className="taskflow-sidebar">
-          <div className="taskflow-sidebar-link active">
-            <i className="fa fa-th-large" />
-            Dashboard
-          </div>
+          <button type="button" className="taskflow-sidebar-link" onClick={onBackHome}>
+            <i className="fa fa-home" />
+            Home
+          </button>
 
           <div className="taskflow-sidebar-title">Projects</div>
 
@@ -415,14 +421,6 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
           />
 
           <div className="taskflow-sidebar-spacer" />
-          <div className="taskflow-sidebar-link">
-            <i className="fa fa-tasks" />
-            My tasks
-          </div>
-          <div className="taskflow-sidebar-link">
-            <i className="fa fa-cog" />
-            Settings
-          </div>
         </aside>
 
         <main className="taskflow-main">

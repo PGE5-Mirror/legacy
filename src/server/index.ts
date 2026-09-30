@@ -3,27 +3,14 @@ import path from 'node:path';
 import * as db from './persistence';
 import itemsRoutes from './routes/items.routes';
 import authRoutes from './routes/auth.routes';
-import getProjects from './routes/getProjects';
-import addProject from './routes/addProject';
-import updateProject from './routes/updateProject';
-import deleteProject from './routes/deleteProject';
-import getColumns from './routes/getColumns';
-import addColumn from './routes/addColumn';
-import updateColumn from './routes/updateColumn';
-import deleteColumn from './routes/deleteColumn';
 import { startTaskCreatedConsumer } from './events/consumers/taskCreatedConsumer';
-import { verifyToken } from './middlewares/auth.middleware';
-import getOrganizations from './routes/getOrganizations';
-import addOrganization from './routes/addOrganization';
-import updateOrganization from './routes/updateOrganization';
-import deleteOrganization from './routes/deleteOrganization';
-import getOrganizationMembers from './routes/getOrganizationMembers';
-import addOrganizationMember from './routes/addOrganizationMember';
-import deleteOrganizationMember from './routes/deleteOrganizationMember';
-import getUserSettings from './routes/getUserSettings';
-import updateUserSettings from './routes/updateUserSettings';
 import userRoutes from './routes/user.routes';
 import notificationsRoutes from './routes/notifications.routes';
+import columnsRoutes from './routes/columns.routes';
+import organizationMembersRoutes from './routes/organizationMembers.routes';
+import organizationsRoutes from './routes/organizations.routes';
+import projectsRoutes from './routes/projects.routes';
+import userSettingsRoutes from './routes/userSettings.routes';
 
 const app = express();
 
@@ -39,33 +26,15 @@ app.use('/', itemsRoutes);
 app.use('/', authRoutes);
 app.use('/', userRoutes);
 app.use('/', notificationsRoutes);
+app.use('/', columnsRoutes);
+app.use('/', organizationMembersRoutes);
+app.use('/', organizationsRoutes);
+app.use('/', projectsRoutes);
+app.use('/', userSettingsRoutes);
 
 app.get('/', (_req, res) => {
-    res.sendFile(path.resolve(staticPath, 'index.html'));
+  res.sendFile(path.resolve(staticPath, 'index.html'));
 });
-
-app.put('/projects/:id', verifyToken, updateProject);
-app.delete('/projects/:id', verifyToken, deleteProject);
-
-app.get('/columns', getColumns);
-app.post('/columns', addColumn);
-app.put('/columns/:id', updateColumn);
-app.delete('/columns/:id', deleteColumn);
-
-app.get('/organizations', verifyToken, getOrganizations);
-app.post('/organizations', verifyToken, addOrganization);
-app.put('/organizations/:id', verifyToken, updateOrganization);
-app.delete('/organizations/:id', verifyToken, deleteOrganization);
-
-app.get('/organizations/:id/members', verifyToken, getOrganizationMembers);
-app.post('/organizations/:id/members', verifyToken, addOrganizationMember);
-app.delete('/organizations/:id/members/:memberId', verifyToken, deleteOrganizationMember);
-
-app.get('/organizations/:id/projects', verifyToken, getProjects);
-app.post('/organizations/:id/projects', verifyToken, addProject);
-
-app.get('/users/me/settings', verifyToken, getUserSettings);
-app.put('/users/me/settings', verifyToken, updateUserSettings);
 
 db.init()
   .then(() => {

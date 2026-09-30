@@ -1,509 +1,491 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Form, Modal } from 'react-bootstrap';
 import {
-    BoardColumn,
-    Item,
-    Organization,
-    OrganizationMember,
-    Project,
+  BoardColumn,
+  Item,
+  Organization,
+  OrganizationMember,
+  Project,
+  UserSummary,
 } from '../types';
+import { OrganizationManager } from './OrganizationManager';
+import { apiRequest as request } from '../api';
+import { NotificationBell } from './NotificationBell';
 
 interface KanbanBoardProps {
-    token: string;
-    onOpenProfile: () => void;
+  onOpenProfile: () => void;
 }
 
 type TasksByColumn = Record<string, Item[]>;
 
-export function KanbanBoard({ token, onOpenProfile }: KanbanBoardProps) {
-    const [organizations, setOrganizations] = useState<Organization[]>([]);
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [activeProject, setActiveProject] = useState<Project | null>(null);
-    const [columns, setColumns] = useState<BoardColumn[]>([]);
-    const [members, setMembers] = useState<OrganizationMember[]>([]);
-    const [tasksByColumn, setTasksByColumn] = useState<TasksByColumn>({});
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [search, setSearch] = useState('');
+export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [activeProject, setActiveProject] = useState<Project | null>(null);
+  const [columns, setColumns] = useState<BoardColumn[]>([]);
+  const [members, setMembers] = useState<OrganizationMember[]>([]);
+  const [tasksByColumn, setTasksByColumn] = useState<TasksByColumn>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
 
-    const [showTaskForm, setShowTaskForm] = useState(false);
-    const [selectedColumnId, setSelectedColumnId] = useState('');
-    const [taskName, setTaskName] = useState('');
-    const [assignedTo, setAssignedTo] = useState('');
-    const [saving, setSaving] = useState(false);
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [selectedColumnId, setSelectedColumnId] = useState('');
+  const [taskName, setTaskName] = useState('');
+  const [assignedTo, setAssignedTo] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [columnName, setColumnName] = useState('');
+  const [users, setUsers] = useState<UserSummary[]>([]);
+  const [, setActiveOrganization] = useState<Organization | null>(null);
 
-    const request = useCallback(
-        async <T,>(url: string, options: RequestInit = {}): Promise<T> => {
-            const response = await fetch(url, {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                    ...(options.headers || {}),
-                },
-            });
+  const createColumn = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-            if (response.status === 401) {
-                localStorage.removeItem('authToken');
-                window.location.reload();
-                throw new Error('Session expired');
-            }
+    if (!activeProject || !columnName.trim()) return;
 
-            if (!response.ok) {
-                const body = await response.json().catch(() => ({}));
-                throw new Error(body.error || 'Request failed');
-            }
+    setSaving(true);
+    setError('');
 
-            return response.json() as Promise<T>;
-        },
-        [token],
-    );
+    try {
+      const createdColumn = await request<BoardColumn>('/columns', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: columnName.trim(),
+          project_id: activeProject.id,
+        }),
+      });
 
-    const loadProject = useCallback(
-        async (project: Project) => {
-            setLoading(true);
-            setError('');
-            setActiveProject(project);
+      setColumns((current) => [...current, createdColumn]);
 
-            try {
-                const projectColumns = await request<BoardColumn[]>(
-                    `/columns?project_id=${encodeURIComponent(project.id)}`,
-                );
+      setTasksByColumn((current) => ({
+        ...current,
+        [createdColumn.id]: [],
+      }));
 
-                const orderedColumns = [...projectColumns].sort(
-                    (a, b) => a.position - b.position,
-                );
+      setColumnName('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to create column');
+    } finally {
+      setSaving(false);
+    }
+  };
 
-                const taskEntries = await Promise.all(
-                    orderedColumns.map(async (column) => {
-                        const tasks = await request<Item[]>(
-                            `/columns/${column.id}/tasks`,
-                        );
+  const loadProject = useCallback(
+    async (project: Project) => {
+      setLoading(true);
+      setError('');
+      setActiveProject(project);
 
-                        return [
-                            column.id,
-                            [...tasks].sort((a, b) => a.position - b.position),
-                        ] as const;
-                    }),
-                );
-
-               const groupedTasks = taskEntries.reduce<TasksByColumn>(
-                (result, [columnId, tasks]) => {
-                    result[columnId] = tasks;
-                    return result;
-                },
-                {},
-            );
-
-            setColumns(orderedColumns);
-            setTasksByColumn(groupedTasks);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Unable to load board');
-                setColumns([]);
-                setTasksByColumn({});
-            } finally {
-                setLoading(false);
-            }
-        },
-        [request],
-    );
-
-    useEffect(() => {
-        const loadWorkspace = async () => {
-            setLoading(true);
-            setError('');
-
-            try {
-                const organizationList = await request<Organization[]>('/organizations');
-                setOrganizations(organizationList);
-
-                const organization = organizationList[0];
-
-                if (!organization) {
-                    setError('No organization is available.');
-                    return;
-                }
-
-                const [projectList, memberList] = await Promise.all([
-                    request<Project[]>(`/organizations/${organization.id}/projects`),
-                    request<OrganizationMember[]>(
-                        `/organizations/${organization.id}/members`,
-                    ),
-                ]);
-
-                setProjects(projectList);
-                setMembers(memberList);
-
-                if (projectList[0]) {
-                    await loadProject(projectList[0]);
-                } else {
-                    setError('No project is available.');
-                }
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Unable to load workspace');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        void loadWorkspace();
-    }, [loadProject, request]);
-
-    const openTaskForm = (columnId: string) => {
-        setSelectedColumnId(columnId);
-        setTaskName('');
-        setAssignedTo('');
-        setShowTaskForm(true);
-    };
-
-    const createTask = async (event: React.FormEvent) => {
-        event.preventDefault();
-
-        if (!taskName.trim() || !selectedColumnId) return;
-
-        setSaving(true);
-        setError('');
-
-        try {
-            const position = tasksByColumn[selectedColumnId]?.length || 0;
-            const createdTask = await request<Item>('/items', {
-                method: 'POST',
-                body: JSON.stringify({
-                    name: taskName.trim(),
-                    column_id: selectedColumnId,
-                    assigned_to: assignedTo || null,
-                    position,
-                }),
-            });
-
-            setTasksByColumn((current) => ({
-                ...current,
-                [selectedColumnId]: [
-                    ...(current[selectedColumnId] || []),
-                    createdTask,
-                ],
-            }));
-
-            setShowTaskForm(false);
-            setTaskName('');
-            setAssignedTo('');
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Unable to create task');
-        } finally {
-            setSaving(false);
+      try {
+        if (project.organization_id) {
+          const memberList = await request<OrganizationMember[]>(
+            `/organizations/${project.organization_id}/members`,
+          );
+          setMembers(memberList);
         }
-    };
 
-    const moveTask = async (task: Item, destinationColumnId: string) => {
-        if (!task.column_id || task.column_id === destinationColumnId) return;
+        const projectColumns = await request<BoardColumn[]>(
+          `/columns?project_id=${encodeURIComponent(project.id)}`,
+        );
 
-        setError('');
+        const orderedColumns = [...projectColumns].sort((a, b) => a.position - b.position);
 
-        try {
-            const position = tasksByColumn[destinationColumnId]?.length || 0;
-            const updatedTask = await request<Item>(`/items/${task.id}`, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    column_id: destinationColumnId,
-                    position,
-                }),
-            });
+        const taskEntries = await Promise.all(
+          orderedColumns.map(async (column) => {
+            const tasks = await request<Item[]>(`/columns/${column.id}/tasks`);
 
-            setTasksByColumn((current) => {
-                const next: TasksByColumn = {};
+            return [column.id, [...tasks].sort((a, b) => a.position - b.position)] as const;
+          }),
+        );
 
-                Object.keys(current).forEach((columnId) => {
-                    next[columnId] = current[columnId].filter(
-                        (currentTask) => currentTask.id !== task.id,
-                    );
-                });
+        const groupedTasks = taskEntries.reduce<TasksByColumn>((result, [columnId, tasks]) => {
+          result[columnId] = tasks;
+          return result;
+        }, {});
 
-                next[destinationColumnId] = [
-                    ...(next[destinationColumnId] || []),
-                    updatedTask,
-                ].sort((a, b) => a.position - b.position);
+        setColumns(orderedColumns);
+        setTasksByColumn(groupedTasks);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unable to load board');
+        setColumns([]);
+        setTasksByColumn({});
+      } finally {
+        setLoading(false);
+      }
+    },
+    [request],
+  );
 
-                return next;
-            });
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Unable to move task');
+  useEffect(() => {
+    const loadWorkspace = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const organizationList = await request<Organization[]>('/organizations');
+        setOrganizations(organizationList);
+
+        const organization = organizationList[0];
+        setActiveOrganization(organization);
+
+        if (!organization) {
+          setError('No organization is available.');
+          return;
         }
-    };
 
-    const assignTask = async (task: Item, userId: string) => {
-        setError('');
+        const [projectList, memberList, userList] = await Promise.all([
+          request<Project[]>(`/organizations/${organization.id}/projects`),
+          request<OrganizationMember[]>(`/organizations/${organization.id}/members`),
+          request<UserSummary[]>('/users'),
+        ]);
 
-        try {
-            const updatedTask = await request<Item>(`/items/${task.id}`, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    assigned_to: userId || null,
-                }),
-            });
+        setUsers(userList);
+        setProjects(projectList);
+        setMembers(memberList);
 
-            setTasksByColumn((current) => ({
-                ...current,
-                [task.column_id || '']: (current[task.column_id || ''] || []).map(
-                    (currentTask) =>
-                        currentTask.id === updatedTask.id ? updatedTask : currentTask,
-                ),
-            }));
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Unable to assign task');
+        if (projectList[0]) {
+          await loadProject(projectList[0]);
+        } else {
+          setError('No project is available.');
         }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unable to load workspace');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const memberLabel = (userId: string) =>
-        `Member ${userId.slice(0, 8)}`;
+    void loadWorkspace();
+  }, [loadProject, request]);
 
-    return (
-        <div className="taskflow-app">
-            <header className="taskflow-header">
-                <strong className="taskflow-logo">TaskFlow</strong>
+  const openTaskForm = (columnId: string) => {
+    setSelectedColumnId(columnId);
+    setTaskName('');
+    setAssignedTo('');
+    setShowTaskForm(true);
+  };
 
-                <div className="taskflow-header-actions">
-                    <input
-                        type="search"
-                        placeholder="Search tasks, projects..."
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                    />
+  const createTask = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-                    <button
-                        type="button"
-                        className="taskflow-icon-button"
-                        aria-label="Notifications"
-                    >
-                        <i className="fa fa-bell" />
-                    </button>
+    if (!taskName.trim() || !selectedColumnId) return;
 
-                    <button
-                        type="button"
-                        className="taskflow-avatar"
-                        onClick={onOpenProfile}
-                        aria-label="Open profile"
-                    >
-                        <i className="fa fa-user" />
-                    </button>
-                </div>
-            </header>
+    setSaving(true);
+    setError('');
 
-            <div className="taskflow-layout">
-                <aside className="taskflow-sidebar">
-                    <div className="taskflow-dashboard-link">
-                        <i className="fa fa-th-large" />
-                        Dashboard
-                    </div>
+    try {
+      const position = tasksByColumn[selectedColumnId]?.length || 0;
+      const createdTask = await request<Item>('/items', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: taskName.trim(),
+          column_id: selectedColumnId,
+          assigned_to: assignedTo || null,
+          position,
+        }),
+      });
 
-                    <p className="taskflow-sidebar-title">Projects</p>
+      setTasksByColumn((current) => ({
+        ...current,
+        [selectedColumnId]: [...(current[selectedColumnId] || []), createdTask],
+      }));
 
-                    {projects.map((project) => (
-                        <button
-                            key={project.id}
-                            type="button"
-                            className={
-                                activeProject?.id === project.id
-                                    ? 'taskflow-project active'
-                                    : 'taskflow-project'
-                            }
-                            onClick={() => void loadProject(project)}
-                        >
-                            <i className="fa fa-folder" />
-                            {project.name}
-                        </button>
-                    ))}
+      setShowTaskForm(false);
+      setTaskName('');
+      setAssignedTo('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to create task');
+    } finally {
+      setSaving(false);
+    }
+  };
 
-                    <div className="taskflow-sidebar-spacer" />
+  const moveTask = async (task: Item, destinationColumnId: string) => {
+    if (!task.column_id || task.column_id === destinationColumnId) return;
 
-                    <div className="taskflow-sidebar-link">
-                        <i className="fa fa-tasks" />
-                        My tasks
-                    </div>
-                    <div className="taskflow-sidebar-link">
-                        <i className="fa fa-cog" />
-                        Settings
-                    </div>
-                </aside>
+    setError('');
 
-                <main className="taskflow-main">
-                    <div className="taskflow-board-heading">
-                        <div>
-                            <h1>{activeProject?.name || 'Project board'}</h1>
-                            <p>Kanban Board · {members.length} members</p>
-                        </div>
-                    </div>
+    try {
+      const position = tasksByColumn[destinationColumnId]?.length || 0;
+      const updatedTask = await request<Item>(`/items/${task.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          column_id: destinationColumnId,
+          position,
+        }),
+      });
 
-                    {error && <div className="alert alert-danger">{error}</div>}
+      setTasksByColumn((current) => {
+        const next: TasksByColumn = {};
 
-                    {loading ? (
-                        <p className="taskflow-loading">Loading board...</p>
-                    ) : columns.length === 0 ? (
-                        <p className="taskflow-empty">No columns are available.</p>
-                    ) : (
-                        <div className="kanban-board">
-                            {columns.map((column, columnIndex) => {
-                                const tasks = (tasksByColumn[column.id] || []).filter(
-                                    (task) =>
-                                        task.name
-                                            .toLowerCase()
-                                            .includes(search.toLowerCase()),
-                                );
+        Object.keys(current).forEach((columnId) => {
+          next[columnId] = current[columnId].filter((currentTask) => currentTask.id !== task.id);
+        });
 
-                                return (
-                                    <section
-                                        key={column.id}
-                                        className={`kanban-column kanban-column-${
-                                            columnIndex % 3
-                                        }`}
-                                    >
-                                        <div className="kanban-column-heading">
-                                            <h2>
-                                                <span className="kanban-column-dot" />
-                                                {column.name}
-                                            </h2>
-                                            <span>{tasks.length}</span>
-                                        </div>
+        next[destinationColumnId] = [...(next[destinationColumnId] || []), updatedTask].sort(
+          (a, b) => a.position - b.position,
+        );
 
-                                        <div className="kanban-task-list">
-                                            {tasks.map((task) => (
-                                                <article
-                                                    key={task.id}
-                                                    className="kanban-task-card"
-                                                >
-                                                    <h3>{task.name}</h3>
+        return next;
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to move task');
+    }
+  };
 
-                                                    <label>
-                                                        Assignee
-                                                        <select
-                                                            value={task.assigned_to || ''}
-                                                            onChange={(event) =>
-                                                                void assignTask(
-                                                                    task,
-                                                                    event.target.value,
-                                                                )
-                                                            }
-                                                        >
-                                                            <option value="">
-                                                                Unassigned
-                                                            </option>
-                                                            {members.map((member) => (
-                                                                <option
-                                                                    key={member.id}
-                                                                    value={member.user_id}
-                                                                >
-                                                                    {memberLabel(
-                                                                        member.user_id,
-                                                                    )}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    </label>
+  const assignTask = async (task: Item, userId: string) => {
+    setError('');
 
-                                                    <label>
-                                                        Move to
-                                                        <select
-                                                            value={task.column_id || ''}
-                                                            onChange={(event) =>
-                                                                void moveTask(
-                                                                    task,
-                                                                    event.target.value,
-                                                                )
-                                                            }
-                                                        >
-                                                            {columns.map(
-                                                                (destinationColumn) => (
-                                                                    <option
-                                                                        key={
-                                                                            destinationColumn.id
-                                                                        }
-                                                                        value={
-                                                                            destinationColumn.id
-                                                                        }
-                                                                    >
-                                                                        {
-                                                                            destinationColumn.name
-                                                                        }
-                                                                    </option>
-                                                                ),
-                                                            )}
-                                                        </select>
-                                                    </label>
-                                                </article>
-                                            ))}
-                                        </div>
+    try {
+      const updatedTask = await request<Item>(`/items/${task.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          assigned_to: userId || null,
+        }),
+      });
 
-                                        <button
-                                            type="button"
-                                            className="kanban-add-task"
-                                            onClick={() => openTaskForm(column.id)}
-                                        >
-                                            <i className="fa fa-plus" />
-                                            Add Task
-                                        </button>
-                                    </section>
-                                );
-                            })}
-                        </div>
-                    )}
-                </main>
+      setTasksByColumn((current) => ({
+        ...current,
+        [task.column_id || '']: (current[task.column_id || ''] || []).map((currentTask) =>
+          currentTask.id === updatedTask.id ? updatedTask : currentTask,
+        ),
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to assign task');
+    }
+  };
+
+  const memberLabel = (userId: string) =>
+    users.find((user) => user.id === userId)?.email || 'Unknown user';
+
+  return (
+    <div className="taskflow-app">
+      <header className="taskflow-header">
+        <strong className="taskflow-logo">TaskFlow</strong>
+
+        <div className="taskflow-header-actions">
+          <input
+            type="search"
+            placeholder="Search tasks, projects..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+
+          <NotificationBell />
+
+          <button
+            type="button"
+            className="taskflow-avatar"
+            onClick={onOpenProfile}
+            aria-label="Open profile"
+          >
+            <i className="fa fa-user" />
+          </button>
+        </div>
+      </header>
+
+      <div className="taskflow-layout">
+        <aside className="taskflow-sidebar">
+          <div className="taskflow-dashboard-link">
+            <i className="fa fa-th-large" />
+            Dashboard
+          </div>
+
+          <p className="taskflow-sidebar-title">Projects</p>
+
+          {projects.map((project) => (
+            <button
+              key={project.id}
+              type="button"
+              className={
+                activeProject?.id === project.id ? 'taskflow-project active' : 'taskflow-project'
+              }
+              onClick={() => void loadProject(project)}
+            >
+              <i className="fa fa-folder" />
+              {project.name}
+            </button>
+          ))}
+
+          <OrganizationManager
+            organizations={organizations}
+            request={request}
+            onOrganizationCreated={(organization) => {
+              setOrganizations((current) => [...current, organization]);
+            }}
+            onProjectCreated={(project) => setProjects((current) => [...current, project])}
+          />
+
+          <div className="taskflow-sidebar-spacer" />
+
+          <div className="taskflow-sidebar-link">
+            <i className="fa fa-tasks" />
+            My tasks
+          </div>
+          <div className="taskflow-sidebar-link">
+            <i className="fa fa-cog" />
+            Settings
+          </div>
+        </aside>
+
+        <main className="taskflow-main">
+          <div className="taskflow-board-heading">
+            <div>
+              <h1>{activeProject?.name || 'Project board'}</h1>
+              <p>Kanban Board · {members.length} members</p>
             </div>
 
-            <Modal
-                show={showTaskForm}
-                onHide={() => setShowTaskForm(false)}
-                centered
-            >
-                <Form onSubmit={createTask}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Create task</Modal.Title>
-                    </Modal.Header>
+            {activeProject && (
+              <form onSubmit={createColumn} className="taskflow-create-column">
+                <div className="taskflow-column-input">
+                  <i className="fa fa-columns" />
 
-                    <Modal.Body>
-                        <Form.Group controlId="taskName">
-                            <Form.Label>Task name</Form.Label>
-                            <Form.Control
-                                value={taskName}
-                                onChange={(event) => setTaskName(event.target.value)}
-                                placeholder="Enter task name"
-                                autoFocus
-                                required
-                            />
-                        </Form.Group>
+                  <input
+                    type="text"
+                    value={columnName}
+                    onChange={(event) => setColumnName(event.target.value)}
+                    placeholder="New column name"
+                    aria-label="New column name"
+                    required
+                  />
+                </div>
 
-                        <Form.Group controlId="taskAssignee">
-                            <Form.Label>Assignee</Form.Label>
-                            <Form.Control
-                                as="select"
-                                value={assignedTo}
-                                onChange={(event) => setAssignedTo(event.target.value)}
+                <button
+                  type="submit"
+                  className="taskflow-add-column-button"
+                  disabled={saving || !columnName.trim()}
+                >
+                  <i className="fa fa-plus" />
+                  {saving ? 'Adding...' : 'Add column'}
+                </button>
+              </form>
+            )}
+          </div>
+
+          {error && <div className="alert alert-danger">{error}</div>}
+
+          {loading ? (
+            <p className="taskflow-loading">Loading board...</p>
+          ) : columns.length === 0 ? (
+            <p className="taskflow-empty">No columns are available.</p>
+          ) : (
+            <div className="kanban-board">
+              {columns.map((column, columnIndex) => {
+                const tasks = (tasksByColumn[column.id] || []).filter((task) =>
+                  task.name.toLowerCase().includes(search.toLowerCase()),
+                );
+
+                return (
+                  <section
+                    key={column.id}
+                    className={`kanban-column kanban-column-${columnIndex % 3}`}
+                  >
+                    <div className="kanban-column-heading">
+                      <h2>
+                        <span className="kanban-column-dot" />
+                        {column.name}
+                      </h2>
+                      <span>{tasks.length}</span>
+                    </div>
+
+                    <div className="kanban-task-list">
+                      {tasks.map((task) => (
+                        <article key={task.id} className="kanban-task-card">
+                          <h3>{task.name}</h3>
+
+                          <label>
+                            Assignee
+                            <select
+                              value={task.assigned_to || ''}
+                              onChange={(event) => void assignTask(task, event.target.value)}
                             >
-                                <option value="">Unassigned</option>
-                                {members.map((member) => (
-                                    <option key={member.id} value={member.user_id}>
-                                        {memberLabel(member.user_id)}
-                                    </option>
-                                ))}
-                            </Form.Control>
-                        </Form.Group>
-                    </Modal.Body>
+                              <option value="">Unassigned</option>
+                              {members.map((member) => (
+                                <option key={member.id} value={member.user_id}>
+                                  {memberLabel(member.user_id)}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
 
-                    <Modal.Footer>
-                        <Button
-                            variant="light"
-                            onClick={() => setShowTaskForm(false)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="submit"
-                            variant="primary"
-                            disabled={saving || !taskName.trim()}
-                        >
-                            {saving ? 'Creating...' : 'Create task'}
-                        </Button>
-                    </Modal.Footer>
-                </Form>
-            </Modal>
-        </div>
-    );
+                          <label>
+                            Move to
+                            <select
+                              value={task.column_id || ''}
+                              onChange={(event) => void moveTask(task, event.target.value)}
+                            >
+                              {columns.map((destinationColumn) => (
+                                <option key={destinationColumn.id} value={destinationColumn.id}>
+                                  {destinationColumn.name}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        </article>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="kanban-add-task"
+                      onClick={() => openTaskForm(column.id)}
+                    >
+                      <i className="fa fa-plus" />
+                      Add Task
+                    </button>
+                  </section>
+                );
+              })}
+            </div>
+          )}
+        </main>
+      </div>
+
+      <Modal show={showTaskForm} onHide={() => setShowTaskForm(false)} centered>
+        <Form onSubmit={createTask}>
+          <Modal.Header closeButton>
+            <Modal.Title>Create task</Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
+            <Form.Group controlId="taskName">
+              <Form.Label>Task name</Form.Label>
+              <Form.Control
+                value={taskName}
+                onChange={(event) => setTaskName(event.target.value)}
+                placeholder="Enter task name"
+                autoFocus
+                required
+              />
+            </Form.Group>
+
+            <Form.Group controlId="taskAssignee">
+              <Form.Label>Assignee</Form.Label>
+              <Form.Control
+                as="select"
+                value={assignedTo}
+                onChange={(event) => setAssignedTo(event.target.value)}
+              >
+                <option value="">Unassigned</option>
+                {members.map((member) => (
+                  <option key={member.id} value={member.user_id}>
+                    {memberLabel(member.user_id)}
+                  </option>
+                ))}
+              </Form.Control>
+            </Form.Group>
+          </Modal.Body>
+
+          <Modal.Footer>
+            <Button variant="light" onClick={() => setShowTaskForm(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" disabled={saving || !taskName.trim()}>
+              {saving ? 'Creating...' : 'Create task'}
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+    </div>
+  );
 }

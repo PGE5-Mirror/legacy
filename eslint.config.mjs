@@ -17,5 +17,6 @@ export default defineConfig([
   { files: ['spec/**/*.js'], languageOptions: { globals: { ...globals.jest } } },
   tseslint.configs.recommended,
   pluginReact.configs.flat.recommended,
+  { settings: { react: { version: '16.14' } } },
   eslintPluginPrettierRecommended,
 ]);

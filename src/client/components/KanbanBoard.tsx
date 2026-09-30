@@ -194,7 +194,9 @@ export function KanbanBoard({ initialProjectId, onBackHome, onOpenProfile }: Kan
 
         const preferredProjectId = initialProjectId || localStorage.getItem('lastProjectId') || '';
         const matchingProject =
-          projectList.find((project) => project.id === preferredProjectId) || projectList[0] || null;
+          projectList.find((project) => project.id === preferredProjectId) ||
+          projectList[0] ||
+          null;
 
         if (matchingProject) {
           await loadProject(matchingProject);

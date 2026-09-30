@@ -130,10 +130,13 @@ export function OrganizationPage({
     setError('');
 
     try {
-      const createdProject = await request<Project>(`/organizations/${selectedOrganizationId}/projects`, {
-        method: 'POST',
-        body: JSON.stringify({ name: projectName.trim() }),
-      });
+      const createdProject = await request<Project>(
+        `/organizations/${selectedOrganizationId}/projects`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ name: projectName.trim() }),
+        },
+      );
 
       setProjects((current) => [...current, createdProject]);
       setProjectName('');
@@ -295,7 +298,11 @@ export function OrganizationPage({
                         <div className="d-flex justify-content-between align-items-center">
                           <span>{organization.name}</span>
                           <span className="badge badge-light">
-                            {projects.filter((project) => project.organization_id === organization.id).length}
+                            {
+                              projects.filter(
+                                (project) => project.organization_id === organization.id,
+                              ).length
+                            }
                           </span>
                         </div>
                       </button>
@@ -309,7 +316,9 @@ export function OrganizationPage({
           <div className="col-md-8">
             <div className="card h-100">
               <div className="card-header">
-                <strong>{selectedOrganization ? selectedOrganization.name : 'Create organization'}</strong>
+                <strong>
+                  {selectedOrganization ? selectedOrganization.name : 'Create organization'}
+                </strong>
               </div>
               <div className="card-body">
                 <Form onSubmit={createOrganization} className="mb-4">
@@ -322,7 +331,11 @@ export function OrganizationPage({
                         placeholder="Organization name"
                         required
                       />
-                      <Button type="submit" className="ml-2" disabled={saving || !organizationName.trim()}>
+                      <Button
+                        type="submit"
+                        className="ml-2"
+                        disabled={saving || !organizationName.trim()}
+                      >
                         Create
                       </Button>
                     </div>
@@ -429,7 +442,11 @@ export function OrganizationPage({
                             ))}
                           </Form.Control>
 
-                          <Button type="submit" className="ml-2" disabled={saving || !selectedUserId}>
+                          <Button
+                            type="submit"
+                            className="ml-2"
+                            disabled={saving || !selectedUserId}
+                          >
                             Add
                           </Button>
                         </div>

@@ -1,10 +1,7 @@
 import { Request, Response } from 'express';
 import { getUsers } from '../../services/user.service';
 
-export default async function getUsersController(
-  _req: Request,
-  res: Response,
-): Promise<Response> {
+export default async function getUsersController(_req: Request, res: Response): Promise<Response> {
   try {
     const users = await getUsers();
     return res.status(200).json(users);

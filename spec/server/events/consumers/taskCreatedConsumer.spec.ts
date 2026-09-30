@@ -24,7 +24,7 @@ describe('taskCreatedConsumer', () => {
     expect(consumeEvent).toHaveBeenCalledTimes(1);
     expect(consumeEvent).toHaveBeenCalledWith('TaskCreated', expect.any(Function));
 
-    const callback = (consumeEvent as jest.Mock).mock.calls[0][1] as any;
+    const callback = (consumeEvent as jest.Mock).mock.calls[0][1];
     const mockTaskData = { taskId: 'task-123', name: 'Test Task', userId: 'user-1' };
 
     await callback(mockTaskData);
@@ -48,7 +48,7 @@ describe('taskCreatedConsumer', () => {
 
     startTaskCreatedConsumer();
 
-    const callback = (consumeEvent as jest.Mock).mock.calls[0][1] as any;
+    const callback = (consumeEvent as jest.Mock).mock.calls[0][1];
     const mockTaskData = { taskId: 'task-123', name: 'Test Task', userId: 'user-1' };
 
     await callback(mockTaskData);

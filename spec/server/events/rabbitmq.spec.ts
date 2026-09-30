@@ -1,4 +1,4 @@
-import amqp from 'amqplib';
+import amqp, { Channel, Connection, ConsumeMessage } from 'amqplib';
 
 jest.mock('amqplib', () => ({
   __esModule: true,
@@ -8,13 +8,13 @@ jest.mock('amqplib', () => ({
 }));
 
 describe('rabbitmq service', () => {
-  let mockChannel: any;
-  let mockConnection: any;
+  let mockChannel: Channel;
+  let mockConnection: Connection;
   let connect: typeof import('../../../src/server/events/rabbitmq').connect;
   let publishEvent: typeof import('../../../src/server/events/rabbitmq').publishEvent;
   let consumeEvent: typeof import('../../../src/server/events/rabbitmq').consumeEvent;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
 
     mockChannel = {
@@ -22,23 +22,21 @@ describe('rabbitmq service', () => {
       sendToQueue: jest.fn().mockReturnValue(true),
       consume: jest.fn(),
       ack: jest.fn(),
-    };
+    } as unknown as Channel;
 
     mockConnection = {
       createChannel: jest.fn().mockResolvedValue(mockChannel),
       on: jest.fn(),
-    };
+    } as unknown as Connection;
 
     (amqp.connect as jest.Mock).mockResolvedValue(mockConnection);
 
-    await new Promise<void>((resolve) => {
-      jest.isolateModules(() => {
-        const rabbitmq = require('../../../src/server/events/rabbitmq');
-        connect = rabbitmq.connect;
-        publishEvent = rabbitmq.publishEvent;
-        consumeEvent = rabbitmq.consumeEvent;
-        resolve();
-      });
+    jest.isolateModules(() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const rabbitmq = require('../../../src/server/events/rabbitmq');
+      connect = rabbitmq.connect;
+      publishEvent = rabbitmq.publishEvent;
+      consumeEvent = rabbitmq.consumeEvent;
     });
   });
 
@@ -47,7 +45,7 @@ describe('rabbitmq service', () => {
       const channel = await connect();
 
       expect(amqp.connect).toHaveBeenCalledTimes(1);
-      expect(mockConnection.createChannel).toHaveBeenCalledTimes(1);
+      expect((mockConnection as unknown as { createChannel: jest.Mock }).createChannel).toHaveBeenCalledTimes(1);
       expect(channel).toBe(mockChannel);
     });
 
@@ -56,7 +54,7 @@ describe('rabbitmq service', () => {
       const channel2 = await connect();
 
       expect(amqp.connect).toHaveBeenCalledTimes(1);
-      expect(mockConnection.createChannel).toHaveBeenCalledTimes(1);
+      expect((mockConnection as unknown as { createChannel: jest.Mock }).createChannel).toHaveBeenCalledTimes(1);
       expect(channel1).toBe(channel2);
     });
   });
@@ -85,8 +83,8 @@ describe('rabbitmq service', () => {
         content: Buffer.from(JSON.stringify({ data: 'test' })),
       };
 
-      mockChannel.consume.mockImplementation((_queue: string, callback: (_msg: any) => void) => {
-        callback(mockMessage);
+      (mockChannel.consume as jest.Mock).mockImplementation((_queue: string, callback: (_msg: ConsumeMessage | null) => void) => {
+        callback(mockMessage as unknown as ConsumeMessage);
       });
 
       await consumeEvent(queueName, onMessage);

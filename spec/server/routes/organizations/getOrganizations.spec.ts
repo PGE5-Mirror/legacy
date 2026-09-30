@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import getOrganizationsController from '../../../../src/server/routes/organizations/getOrganizations';
 import * as db from '../../../../src/server/persistence';
 import * as organizationMembersService from '../../../../src/server/services/organizationMembers.service';
@@ -16,7 +16,7 @@ jest.mock('uuid', () => ({
 }));
 
 describe('getOrganizationsController', () => {
-  let mockReq: any;
+  let mockReq: Partial<Request> & { user?: { id?: string } };
   let mockRes: Partial<Response>;
 
   beforeEach(() => {
@@ -35,7 +35,7 @@ describe('getOrganizationsController', () => {
   it('should return 401 if user is not authenticated', async () => {
     mockReq.user = undefined;
 
-    await getOrganizationsController(mockReq, mockRes as Response);
+    await getOrganizationsController(mockReq as Request, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(401);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
@@ -54,7 +54,7 @@ describe('getOrganizationsController', () => {
       .mockResolvedValueOnce(mockMembers)
       .mockResolvedValueOnce([]);
 
-    await getOrganizationsController(mockReq, mockRes as Response);
+    await getOrganizationsController(mockReq as Request, mockRes as Response);
 
     expect(db.getOrganizations).toHaveBeenCalledTimes(1);
     expect(organizationMembersService.getOrganizationMemberByOrganizationId).toHaveBeenCalledTimes(2);
@@ -68,7 +68,7 @@ describe('getOrganizationsController', () => {
     (db.getOrganizations as jest.Mock).mockResolvedValue(mockOrganizations);
     (organizationMembersService.getOrganizationMemberByOrganizationId as jest.Mock).mockResolvedValue([]);
 
-    await getOrganizationsController(mockReq, mockRes as Response);
+    await getOrganizationsController(mockReq as Request, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(mockRes.json).toHaveBeenCalledWith([]);
@@ -77,7 +77,7 @@ describe('getOrganizationsController', () => {
   it('should return 500 if an error occurs', async () => {
     (db.getOrganizations as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-    await getOrganizationsController(mockReq, mockRes as Response);
+    await getOrganizationsController(mockReq as Request, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });

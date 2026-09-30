@@ -9,11 +9,7 @@ async function getUserExportData(userId: string) {
 }
 
 async function getUsers() {
-    return await db.getUsers();
+  return await db.getUsers();
 }
 
-export {
-    deleteUser,
-    getUserExportData,
-    getUsers,
-};
+export { deleteUser, getUserExportData, getUsers };

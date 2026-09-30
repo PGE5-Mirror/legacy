@@ -20,7 +20,7 @@ describe('addOrganizationMemberController', () => {
 
     mockReq = {
       params: { id: 'org-uuid-123' },
-      body: { added_user_id: 'user-uuid-123', role: 'admin' },
+      body: { user_id: 'user-uuid-123', role: 'admin' },
       user: { id: 'user-uuid-123', email: 'test@example.com' },
     };
 

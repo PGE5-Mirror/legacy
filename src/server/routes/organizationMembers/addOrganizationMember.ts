@@ -14,15 +14,15 @@ export default async function addOrganizationMemberController(
     }
     const rawId = req.params.id;
     const id = Array.isArray(rawId) ? rawId[0] : rawId;
-    const { added_user_id, role } = req.body;
+    const { user_id, role } = req.body;
 
-    if (!added_user_id) {
+    if (!user_id) {
       return res.status(400).json({ error: 'Missing user_id' });
     }
 
     const createdMember = await createOrganizationMember({
       organization_id: id,
-      user_id: added_user_id,
+      user_id: user_id,
       role: role,
     });
 

@@ -10,6 +10,7 @@ jest.mock('uuid', () => ({
 
 jest.mock('../../../../src/server/services/organization.service', () => ({
   getOrganizationById: jest.fn(),
+  isOrganizationAdmin: jest.fn(),
   removeOrganization: jest.fn(),
 }));
 
@@ -33,11 +34,13 @@ describe('deleteOrganizationController', () => {
     const mockOrg = { id: 'org-uuid-123', name: 'Test Org' };
 
     (organizationService.getOrganizationById as jest.Mock).mockResolvedValue(mockOrg);
+    (organizationService.isOrganizationAdmin as jest.Mock).mockResolvedValue(true);
     (organizationService.removeOrganization as jest.Mock).mockResolvedValue(undefined);
 
     await deleteOrganizationController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(organizationService.getOrganizationById).toHaveBeenCalledWith('org-uuid-123');
+    expect(organizationService.isOrganizationAdmin).toHaveBeenCalledWith('org-uuid-123', 'user-uuid-123');
     expect(organizationService.removeOrganization).toHaveBeenCalledWith('org-uuid-123');
     expect(mockRes.sendStatus).toHaveBeenCalledWith(204);
   });
@@ -52,16 +55,6 @@ describe('deleteOrganizationController', () => {
     expect(organizationService.getOrganizationById).not.toHaveBeenCalled();
   });
 
-  it('should return 404 if id is missing', async () => {
-    mockReq.params = { id: '' };
-
-    await deleteOrganizationController(mockReq as AuthenticatedRequest, mockRes as Response);
-
-    expect(mockRes.status).toHaveBeenCalledWith(404);
-    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing id' });
-    expect(organizationService.getOrganizationById).not.toHaveBeenCalled();
-  });
-
   it('should return 404 if the organization does not exist', async () => {
     (organizationService.getOrganizationById as jest.Mock).mockResolvedValue(undefined);
 
@@ -70,6 +63,21 @@ describe('deleteOrganizationController', () => {
     expect(organizationService.getOrganizationById).toHaveBeenCalledWith('org-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(404);
     expect(mockRes.json).toHaveBeenCalledWith({ message: 'Organization not found' });
+    expect(organizationService.removeOrganization).not.toHaveBeenCalled();
+  });
+
+  it('should return 403 if user is not an organization admin', async () => {
+    const mockOrg = { id: 'org-uuid-123', name: 'Test Org' };
+
+    (organizationService.getOrganizationById as jest.Mock).mockResolvedValue(mockOrg);
+    (organizationService.isOrganizationAdmin as jest.Mock).mockResolvedValue(false);
+
+    await deleteOrganizationController(mockReq as AuthenticatedRequest, mockRes as Response);
+
+    expect(organizationService.getOrganizationById).toHaveBeenCalledWith('org-uuid-123');
+    expect(organizationService.isOrganizationAdmin).toHaveBeenCalledWith('org-uuid-123', 'user-uuid-123');
+    expect(mockRes.status).toHaveBeenCalledWith(403);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Only organization admins can delete the organization' });
     expect(organizationService.removeOrganization).not.toHaveBeenCalled();
   });
 

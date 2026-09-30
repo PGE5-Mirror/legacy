@@ -1,16 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Form, Modal } from 'react-bootstrap';
+
+import { apiRequest as request } from '../api';
 import {
   BoardColumn,
   Item,
   Organization,
   OrganizationMember,
   Project,
+  TaskPriority,
   UserSummary,
 } from '../types';
-import { OrganizationManager } from './OrganizationManager';
-import { apiRequest as request } from '../api';
 import { NotificationBell } from './NotificationBell';
+import { OrganizationManager } from './OrganizationManager';
 
 interface KanbanBoardProps {
   onOpenProfile: () => void;
@@ -21,22 +23,24 @@ type TasksByColumn = Record<string, Item[]>;
 export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [activeOrganization, setActiveOrganization] = useState<Organization | null>(null);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [columns, setColumns] = useState<BoardColumn[]>([]);
   const [members, setMembers] = useState<OrganizationMember[]>([]);
+  const [users, setUsers] = useState<UserSummary[]>([]);
   const [tasksByColumn, setTasksByColumn] = useState<TasksByColumn>({});
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
 
+  const [columnName, setColumnName] = useState('');
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [selectedColumnId, setSelectedColumnId] = useState('');
   const [taskName, setTaskName] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [columnName, setColumnName] = useState('');
-  const [users, setUsers] = useState<UserSummary[]>([]);
-  const [, setActiveOrganization] = useState<Organization | null>(null);
+  const [taskPriority, setTaskPriority] = useState<TaskPriority>('medium');
+  const [taskDeadline, setTaskDeadline] = useState('');
 
   const createColumn = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -56,12 +60,10 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
       });
 
       setColumns((current) => [...current, createdColumn]);
-
       setTasksByColumn((current) => ({
         ...current,
         [createdColumn.id]: [],
       }));
-
       setColumnName('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to create column');
@@ -70,51 +72,44 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
     }
   };
 
-  const loadProject = useCallback(
-    async (project: Project) => {
-      setLoading(true);
-      setError('');
-      setActiveProject(project);
+  const loadProject = useCallback(async (project: Project) => {
+    setLoading(true);
+    setError('');
+    setActiveProject(project);
 
-      try {
-        if (project.organization_id) {
-          const memberList = await request<OrganizationMember[]>(
-            `/organizations/${project.organization_id}/members`,
-          );
-          setMembers(memberList);
-        }
-
-        const projectColumns = await request<BoardColumn[]>(
-          `/columns?project_id=${encodeURIComponent(project.id)}`,
+    try {
+      if (project.organization_id) {
+        const memberList = await request<OrganizationMember[]>(
+          `/organizations/${project.organization_id}/members`,
         );
-
-        const orderedColumns = [...projectColumns].sort((a, b) => a.position - b.position);
-
-        const taskEntries = await Promise.all(
-          orderedColumns.map(async (column) => {
-            const tasks = await request<Item[]>(`/columns/${column.id}/tasks`);
-
-            return [column.id, [...tasks].sort((a, b) => a.position - b.position)] as const;
-          }),
-        );
-
-        const groupedTasks = taskEntries.reduce<TasksByColumn>((result, [columnId, tasks]) => {
-          result[columnId] = tasks;
-          return result;
-        }, {});
-
-        setColumns(orderedColumns);
-        setTasksByColumn(groupedTasks);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unable to load board');
-        setColumns([]);
-        setTasksByColumn({});
-      } finally {
-        setLoading(false);
+        setMembers(memberList);
       }
-    },
-    [request],
-  );
+
+      const projectColumns = await request<BoardColumn[]>(
+        `/columns?project_id=${encodeURIComponent(project.id)}`,
+      );
+      const orderedColumns = [...projectColumns].sort((a, b) => a.position - b.position);
+      const taskEntries = await Promise.all(
+        orderedColumns.map(async (column) => {
+          const tasks = await request<Item[]>(`/columns/${column.id}/tasks`);
+          return [column.id, [...tasks].sort((a, b) => a.position - b.position)] as const;
+        }),
+      );
+      const groupedTasks = taskEntries.reduce<TasksByColumn>((result, [columnId, tasks]) => {
+        result[columnId] = tasks;
+        return result;
+      }, {});
+
+      setColumns(orderedColumns);
+      setTasksByColumn(groupedTasks);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to load board');
+      setColumns([]);
+      setTasksByColumn({});
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const loadWorkspace = async () => {
@@ -126,9 +121,13 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
         setOrganizations(organizationList);
 
         const organization = organizationList[0];
-        setActiveOrganization(organization);
+        setActiveOrganization(organization || null);
 
         if (!organization) {
+          setProjects([]);
+          setMembers([]);
+          setColumns([]);
+          setTasksByColumn({});
           setError('No organization is available.');
           return;
         }
@@ -146,6 +145,9 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
         if (projectList[0]) {
           await loadProject(projectList[0]);
         } else {
+          setActiveProject(null);
+          setColumns([]);
+          setTasksByColumn({});
           setError('No project is available.');
         }
       } catch (err) {
@@ -156,12 +158,14 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
     };
 
     void loadWorkspace();
-  }, [loadProject, request]);
+  }, [loadProject]);
 
   const openTaskForm = (columnId: string) => {
     setSelectedColumnId(columnId);
     setTaskName('');
     setAssignedTo('');
+    setTaskPriority('medium');
+    setTaskDeadline('');
     setShowTaskForm(true);
   };
 
@@ -182,6 +186,8 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
           column_id: selectedColumnId,
           assigned_to: assignedTo || null,
           position,
+          priority: taskPriority,
+          deadline: taskDeadline || null,
         }),
       });
 
@@ -189,10 +195,11 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
         ...current,
         [selectedColumnId]: [...(current[selectedColumnId] || []), createdTask],
       }));
-
       setShowTaskForm(false);
       setTaskName('');
       setAssignedTo('');
+      setTaskPriority('medium');
+      setTaskDeadline('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to create task');
     } finally {
@@ -209,10 +216,7 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
       const position = tasksByColumn[destinationColumnId]?.length || 0;
       const updatedTask = await request<Item>(`/items/${task.id}`, {
         method: 'PUT',
-        body: JSON.stringify({
-          column_id: destinationColumnId,
-          position,
-        }),
+        body: JSON.stringify({ column_id: destinationColumnId, position }),
       });
 
       setTasksByColumn((current) => {
@@ -221,7 +225,6 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
         Object.keys(current).forEach((columnId) => {
           next[columnId] = current[columnId].filter((currentTask) => currentTask.id !== task.id);
         });
-
         next[destinationColumnId] = [...(next[destinationColumnId] || []), updatedTask].sort(
           (a, b) => a.position - b.position,
         );
@@ -239,9 +242,7 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
     try {
       const updatedTask = await request<Item>(`/items/${task.id}`, {
         method: 'PUT',
-        body: JSON.stringify({
-          assigned_to: userId || null,
-        }),
+        body: JSON.stringify({ assigned_to: userId || null }),
       });
 
       setTasksByColumn((current) => ({
@@ -252,6 +253,77 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
       }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to assign task');
+    }
+  };
+
+  const deleteProject = async (project: Project) => {
+    const confirmed = window.confirm(
+      `Delete "${project.name}"? All its columns and tasks will also be deleted.`,
+    );
+
+    if (!confirmed) return;
+
+    setError('');
+
+    try {
+      await request<void>(`/projects/${project.id}`, { method: 'DELETE' });
+      const remainingProjects = projects.filter(
+        (currentProject) => currentProject.id !== project.id,
+      );
+      setProjects(remainingProjects);
+
+      if (activeProject?.id === project.id) {
+        setActiveProject(null);
+        setColumns([]);
+        setTasksByColumn({});
+
+        if (remainingProjects[0]) {
+          await loadProject(remainingProjects[0]);
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to delete project');
+    }
+  };
+
+  const updateTaskDeadline = async (task: Item, deadline: string) => {
+    setError('');
+
+    try {
+      const updatedTask = await request<Item>(`/items/${task.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ deadline: deadline || null }),
+      });
+
+      setTasksByColumn((current) => ({
+        ...current,
+        [task.column_id || '']: (current[task.column_id || ''] || []).map((currentTask) =>
+          currentTask.id === updatedTask.id ? updatedTask : currentTask,
+        ),
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to update deadline');
+    }
+  };
+
+  const deleteTask = async (task: Item) => {
+    if (!window.confirm(`Delete "${task.name}"?`)) return;
+
+    setError('');
+
+    try {
+      await request<void>(`/items/${task.id}`, { method: 'DELETE' });
+      setTasksByColumn((current) => {
+        const next: TasksByColumn = {};
+
+        Object.keys(current).forEach((columnId) => {
+          next[columnId] = current[columnId].filter((currentTask) => currentTask.id !== task.id);
+        });
+
+        return next;
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to delete task');
     }
   };
 
@@ -270,9 +342,7 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-
           <NotificationBell />
-
           <button
             type="button"
             className="taskflow-avatar"
@@ -286,25 +356,35 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
 
       <div className="taskflow-layout">
         <aside className="taskflow-sidebar">
-          <div className="taskflow-dashboard-link">
+          <div className="taskflow-sidebar-link active">
             <i className="fa fa-th-large" />
             Dashboard
           </div>
 
-          <p className="taskflow-sidebar-title">Projects</p>
+          <div className="taskflow-sidebar-title">Projects</div>
 
           {projects.map((project) => (
-            <button
-              key={project.id}
-              type="button"
-              className={
-                activeProject?.id === project.id ? 'taskflow-project active' : 'taskflow-project'
-              }
-              onClick={() => void loadProject(project)}
-            >
-              <i className="fa fa-folder" />
-              {project.name}
-            </button>
+            <div key={project.id} className="taskflow-project-row">
+              <button
+                type="button"
+                className={
+                  activeProject?.id === project.id ? 'taskflow-project active' : 'taskflow-project'
+                }
+                onClick={() => void loadProject(project)}
+              >
+                <i className="fa fa-folder" />
+                {project.name}
+              </button>
+              <button
+                type="button"
+                className="taskflow-project-delete"
+                onClick={() => void deleteProject(project)}
+                aria-label={`Delete ${project.name}`}
+                title="Delete project"
+              >
+                <i className="fa fa-trash" />
+              </button>
+            </div>
           ))}
 
           <OrganizationManager
@@ -312,12 +392,29 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
             request={request}
             onOrganizationCreated={(organization) => {
               setOrganizations((current) => [...current, organization]);
+              setActiveOrganization(organization);
             }}
-            onProjectCreated={(project) => setProjects((current) => [...current, project])}
+            onProjectCreated={(project) => {
+              setProjects((current) => [...current, project]);
+              void loadProject(project);
+            }}
+            onOrganizationDeleted={(organizationId) => {
+              setOrganizations((current) =>
+                current.filter((organization) => organization.id !== organizationId),
+              );
+
+              if (activeOrganization?.id === organizationId) {
+                setActiveOrganization(null);
+                setProjects([]);
+                setActiveProject(null);
+                setMembers([]);
+                setColumns([]);
+                setTasksByColumn({});
+              }
+            }}
           />
 
           <div className="taskflow-sidebar-spacer" />
-
           <div className="taskflow-sidebar-link">
             <i className="fa fa-tasks" />
             My tasks
@@ -339,7 +436,6 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
               <form onSubmit={createColumn} className="taskflow-create-column">
                 <div className="taskflow-column-input">
                   <i className="fa fa-columns" />
-
                   <input
                     type="text"
                     value={columnName}
@@ -349,7 +445,6 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
                     required
                   />
                 </div>
-
                 <button
                   type="submit"
                   className="taskflow-add-column-button"
@@ -393,6 +488,26 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
                         <article key={task.id} className="kanban-task-card">
                           <h3>{task.name}</h3>
 
+                          <div className="kanban-task-meta">
+                            <span
+                              className={`task-priority task-priority-${task.priority || 'medium'}`}
+                            >
+                              {(task.priority || 'medium').charAt(0).toUpperCase() +
+                                (task.priority || 'medium').slice(1)}
+                            </span>
+                            <label className="task-deadline-editor">
+                              <i className="fa fa-calendar" />
+                              <input
+                                type="date"
+                                value={task.deadline?.split('T')[0] || ''}
+                                onChange={(event) =>
+                                  void updateTaskDeadline(task, event.target.value)
+                                }
+                                aria-label="Task deadline"
+                              />
+                            </label>
+                          </div>
+
                           <label>
                             Assignee
                             <select
@@ -421,6 +536,16 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
                               ))}
                             </select>
                           </label>
+
+                          <button
+                            type="button"
+                            className="kanban-delete-task"
+                            onClick={() => void deleteTask(task)}
+                            aria-label={`Delete ${task.name}`}
+                            title="Delete task"
+                          >
+                            <i className="fa fa-trash" />
+                          </button>
                         </article>
                       ))}
                     </div>
@@ -446,7 +571,6 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
           <Modal.Header closeButton>
             <Modal.Title>Create task</Modal.Title>
           </Modal.Header>
-
           <Modal.Body>
             <Form.Group controlId="taskName">
               <Form.Label>Task name</Form.Label>
@@ -456,6 +580,28 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
                 placeholder="Enter task name"
                 autoFocus
                 required
+              />
+            </Form.Group>
+
+            <Form.Group controlId="taskPriority">
+              <Form.Label>Priority</Form.Label>
+              <Form.Control
+                as="select"
+                value={taskPriority}
+                onChange={(event) => setTaskPriority(event.target.value as TaskPriority)}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </Form.Control>
+            </Form.Group>
+
+            <Form.Group controlId="taskDeadline">
+              <Form.Label>Deadline</Form.Label>
+              <Form.Control
+                type="date"
+                value={taskDeadline}
+                onChange={(event) => setTaskDeadline(event.target.value)}
               />
             </Form.Group>
 
@@ -475,7 +621,6 @@ export function KanbanBoard({ onOpenProfile }: KanbanBoardProps) {
               </Form.Control>
             </Form.Group>
           </Modal.Body>
-
           <Modal.Footer>
             <Button variant="light" onClick={() => setShowTaskForm(false)}>
               Cancel

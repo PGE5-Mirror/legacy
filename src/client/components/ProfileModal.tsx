@@ -38,7 +38,6 @@ export function ProfileModal({ show, onHide, onLogout, settings, setSettings }: 
     try {
       const res = await apiFetch('/users/me/export');
 
-      // Récupération du fichier JSON pour déclencher le téléchargement côté navigateur
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');

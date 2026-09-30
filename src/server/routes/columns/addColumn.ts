@@ -2,7 +2,10 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware';
 import { createColumn } from '../../services/columns.service';
 
-export default async function addColumnController(req: AuthenticatedRequest, res: Response): Promise<Response> {
+export default async function addColumnController(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> {
   try {
     const { name, project_id } = req.body;
     const userId = req.user?.id;
@@ -25,4 +28,4 @@ export default async function addColumnController(req: AuthenticatedRequest, res
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ error: message });
   }
-};
+}

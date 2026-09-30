@@ -4,7 +4,10 @@ import { updateUserSettings } from '../../services/userSettings.service';
 
 const FONT_SIZES = ['small', 'medium', 'large'];
 
-export default async function updateUserSettingsController(req: AuthenticatedRequest, res: Response): Promise<Response> {
+export default async function updateUserSettingsController(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> {
   try {
     const userId = req.user?.id;
 
@@ -31,4 +34,4 @@ export default async function updateUserSettingsController(req: AuthenticatedReq
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ error: message });
   }
-};
+}

@@ -33,7 +33,7 @@ app.use('/', projectsRoutes);
 app.use('/', userSettingsRoutes);
 
 app.get('/', (_req, res) => {
-    res.sendFile(path.resolve(staticPath, 'index.html'));
+  res.sendFile(path.resolve(staticPath, 'index.html'));
 });
 
 db.init()

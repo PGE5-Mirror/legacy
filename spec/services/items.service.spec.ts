@@ -1,5 +1,4 @@
 import * as db from '../../src/server/persistence';
-import { v4 as uuid } from 'uuid';
 import { createItem, removeItem, getItemsByUserId, getItemById, updateItem } from '../../src/server/services/items.service';
 
 jest.mock('../../src/server/persistence', () => ({
@@ -10,43 +9,31 @@ jest.mock('../../src/server/persistence', () => ({
   updateItem: jest.fn(),
 }));
 
-jest.mock('uuid', () => ({
-  v4: jest.fn(),
-}));
-
 describe('itemsService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('createItem', () => {
-    it('should create an item successfully with a generated uuid and default completed status', async () => {
-      const itemData = { name: 'Test Item', userId: 'user-123' };
-      const mockUuid = 'uuid-123';
+    it('should pass the new task through to the persistence layer', async () => {
+      const itemData = { name: 'Test Item', user_id: 'user-123' };
+      const createdItem = {
+        id: 'uuid-123',
+        name: 'Test Item',
+        completed: false,
+        user_id: 'user-123',
+        column_id: null,
+        assigned_to: null,
+        position: 0,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      };
 
-      (uuid as jest.Mock).mockReturnValue(mockUuid);
-      (db.storeItem as jest.Mock).mockResolvedValue(undefined);
+      (db.storeItem as jest.Mock).mockResolvedValue(createdItem);
 
       const result = await createItem(itemData);
 
-      expect(uuid).toHaveBeenCalledTimes(1);
-      expect(db.storeItem).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: mockUuid,
-          name: 'Test Item',
-          completed: false,
-          userId: 'user-123',
-          createdAt: expect.any(Date),
-        })
-      );
-      expect(result).toEqual(
-        expect.objectContaining({
-          id: mockUuid,
-          name: 'Test Item',
-          completed: false,
-          userId: 'user-123',
-        })
-      );
+      expect(db.storeItem).toHaveBeenCalledWith(itemData);
+      expect(result).toEqual(createdItem);
     });
   });
 
@@ -92,28 +79,16 @@ describe('itemsService', () => {
   });
 
   describe('updateItem', () => {
-    it('should update an item and return the updated version', async () => {
-      const updateData = { id: 'item-123', name: 'Updated Name', completed: true };
+    it('should pass the id and update through to the persistence layer', async () => {
+      const updateData = { name: 'Updated Name', completed: true };
       const updatedItem = { id: 'item-123', name: 'Updated Name', completed: true };
 
-      (db.updateItem as jest.Mock).mockResolvedValue(undefined);
-      (db.getItem as jest.Mock).mockResolvedValue(updatedItem);
+      (db.updateItem as jest.Mock).mockResolvedValue(updatedItem);
 
-      const result = await updateItem(updateData);
+      const result = await updateItem('item-123', updateData);
 
-      expect(db.updateItem).toHaveBeenCalledWith('item-123', {
-        name: 'Updated Name',
-        completed: true,
-      });
-      expect(db.getItem).toHaveBeenCalledWith('item-123');
+      expect(db.updateItem).toHaveBeenCalledWith('item-123', updateData);
       expect(result).toEqual(updatedItem);
-    });
-
-    it('should throw an error if id is missing', async () => {
-      const updateData = { name: 'Updated Name' };
-
-      await expect(updateItem(updateData)).rejects.toThrow('Missing id for update');
-      expect(db.updateItem).not.toHaveBeenCalled();
     });
   });
 });

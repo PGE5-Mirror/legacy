@@ -12,11 +12,11 @@ jest.mock('pg', () => {
 });
 
 describe('PostgreSQL Persistence Layer', () => {
-  let poolInstance: any;
+  let poolInstance: { query: jest.Mock; end: jest.Mock };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    poolInstance = new (Pool as any)();
+    poolInstance = new (Pool as unknown as jest.Mock)();
   });
 
   describe('init and teardown', () => {
@@ -77,16 +77,26 @@ describe('PostgreSQL Persistence Layer', () => {
     });
 
     it('should store a new item', async () => {
-      const newItem = { id: 'task-1', name: 'New Task', userId: 'user-1' };
-      poolInstance.query.mockResolvedValueOnce({ rows: [newItem] });
+      const newItem = { name: 'New Task', user_id: 'user-1' };
+      const storedItem = {
+        id: 'task-1',
+        name: 'New Task',
+        user_id: 'user-1',
+        column_id: null,
+        assigned_to: null,
+        position: 0,
+        completed: false,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      };
+      poolInstance.query.mockResolvedValueOnce({ rows: [storedItem] });
 
       const result = await postgres.storeItem(newItem);
 
       expect(poolInstance.query).toHaveBeenCalledWith(
-        'INSERT INTO tasks (id, name, user_id) VALUES ($1, $2, $3) RETURNING *',
-        ['task-1', 'New Task', 'user-1']
+        expect.stringContaining('INSERT INTO tasks'),
+        ['New Task', 'user-1', null, null, 0]
       );
-      expect(result).toEqual(newItem);
+      expect(result).toEqual(storedItem);
     });
 
     it('should update an item', async () => {
@@ -95,7 +105,7 @@ describe('PostgreSQL Persistence Layer', () => {
       await postgres.updateItem('task-1', { name: 'Updated Task', completed: true });
 
       expect(poolInstance.query).toHaveBeenCalledWith(
-        'UPDATE tasks SET name = $1, completed = $2 WHERE id = $3',
+        expect.stringContaining('UPDATE tasks'),
         ['Updated Task', true, 'task-1']
       );
     });

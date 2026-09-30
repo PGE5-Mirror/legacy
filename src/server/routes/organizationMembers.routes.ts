@@ -8,6 +8,10 @@ const router = Router();
 
 router.get('/organizations/:id/members', verifyToken, getOrganizationMembersController);
 router.post('/organizations/:id/members', verifyToken, addOrganizationMemberController);
-router.delete('/organizations/:id/members/:memberId', verifyToken, deleteOrganizationMemberController);
+router.delete(
+  '/organizations/:id/members/:memberId',
+  verifyToken,
+  deleteOrganizationMemberController,
+);
 
 export default router;

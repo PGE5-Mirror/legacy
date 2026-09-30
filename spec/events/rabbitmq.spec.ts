@@ -8,8 +8,8 @@ jest.mock('amqplib', () => ({
 }));
 
 describe('rabbitmq service', () => {
-  let mockChannel: any;
-  let mockConnection: any;
+  let mockChannel: Record<string, jest.Mock>;
+  let mockConnection: Record<string, jest.Mock>;
   let connect: typeof import('../../src/server/events/rabbitmq').connect;
   let publishEvent: typeof import('../../src/server/events/rabbitmq').publishEvent;
   let consumeEvent: typeof import('../../src/server/events/rabbitmq').consumeEvent;
@@ -31,14 +31,11 @@ describe('rabbitmq service', () => {
 
     (amqp.connect as jest.Mock).mockResolvedValue(mockConnection);
 
-    await new Promise<void>((resolve) => {
-      jest.isolateModules(() => {
-        const rabbitmq = require('../../src/server/events/rabbitmq');
-        connect = rabbitmq.connect;
-        publishEvent = rabbitmq.publishEvent;
-        consumeEvent = rabbitmq.consumeEvent;
-        resolve();
-      });
+    await jest.isolateModulesAsync(async () => {
+      const rabbitmq = await import('../../src/server/events/rabbitmq');
+      connect = rabbitmq.connect;
+      publishEvent = rabbitmq.publishEvent;
+      consumeEvent = rabbitmq.consumeEvent;
     });
   });
 
@@ -85,9 +82,11 @@ describe('rabbitmq service', () => {
         content: Buffer.from(JSON.stringify({ data: 'test' })),
       };
 
-      mockChannel.consume.mockImplementation((_queue: string, callback: (_msg: any) => void) => {
-        callback(mockMessage);
-      });
+      mockChannel.consume.mockImplementation(
+        (_queue: string, callback: (_msg: { content: Buffer }) => void) => {
+          callback(mockMessage);
+        },
+      );
 
       await consumeEvent(queueName, onMessage);
 

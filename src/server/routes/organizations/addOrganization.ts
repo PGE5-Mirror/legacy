@@ -3,7 +3,10 @@ import { AuthenticatedRequest } from '../../middlewares/auth.middleware';
 import { createOrganizationMember } from '../../services/organizationMembers.service';
 import { createOrganization } from '../../services/organization.service';
 
-export default async function addOrganizationController(req: AuthenticatedRequest, res: Response): Promise<Response> {
+export default async function addOrganizationController(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> {
   try {
     const { name } = req.body;
 
@@ -31,4 +34,4 @@ export default async function addOrganizationController(req: AuthenticatedReques
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ error: message });
   }
-};
+}

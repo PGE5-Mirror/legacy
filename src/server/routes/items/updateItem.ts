@@ -44,7 +44,8 @@ export default async function updateItemController(
     });
 
     return res.status(200).json(updatedItem);
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: message });
   }
 }

@@ -9,18 +9,18 @@ export const shorthands = undefined;
  * @returns {Promise<void> | void}
  */
 export const up = (pgm) => {
-    pgm.addColumns('users', {
-        tos_accepted_at: {
-            type: 'timestamp with time zone',
-            notNull: true,
-            default: pgm.func('current_timestamp'),
-        },
-        tos_version: {
-            type: 'varchar(20)',
-            notNull: true,
-            default: '1.0',
-        },
-    });
+  pgm.addColumns('users', {
+    tos_accepted_at: {
+      type: 'timestamp with time zone',
+      notNull: true,
+      default: pgm.func('current_timestamp'),
+    },
+    tos_version: {
+      type: 'varchar(20)',
+      notNull: true,
+      default: '1.0',
+    },
+  });
 };
 
 /**
@@ -29,5 +29,5 @@ export const up = (pgm) => {
  * @returns {Promise<void> | void}
  */
 export const down = (pgm) => {
-    pgm.dropColumns('users', ['tos_accepted_at', 'tos_version']);
+  pgm.dropColumns('users', ['tos_accepted_at', 'tos_version']);
 };

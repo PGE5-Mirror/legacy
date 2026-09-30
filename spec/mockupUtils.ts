@@ -1,6 +1,6 @@
 import { Response } from 'express';
 
-export function createStandardControllerMocks(field: any) {
+export function createStandardControllerMocks<T>(field: T) {
   const mockReq = field;
 
   const mockRes: Partial<Response> = {

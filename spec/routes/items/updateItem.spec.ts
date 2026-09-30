@@ -18,7 +18,7 @@ describe('updateItemController', () => {
     mockReq = {
       params: { id: 'item-uuid-123' },
       body: { name: 'Updated Name', completed: true },
-      user: { id: 'user-uuid-123' } as any,
+      user: { id: 'user-uuid-123', email: 'test@example.com' },
     };
 
     mockRes = {
@@ -29,8 +29,8 @@ describe('updateItemController', () => {
   });
 
   it('should update the item successfully and return status 200', async () => {
-    const existingItem = { id: 'item-uuid-123', name: 'Old Name', completed: false, userId: 'user-uuid-123' };
-    const updatedItem = { id: 'item-uuid-123', name: 'Updated Name', completed: true, userId: 'user-uuid-123' };
+    const existingItem = { id: 'item-uuid-123', name: 'Old Name', completed: false, user_id: 'user-uuid-123' };
+    const updatedItem = { id: 'item-uuid-123', name: 'Updated Name', completed: true, user_id: 'user-uuid-123' };
 
     (getItemById as jest.Mock).mockResolvedValue(existingItem);
     (updateItem as jest.Mock).mockResolvedValue(updatedItem);
@@ -38,18 +38,20 @@ describe('updateItemController', () => {
     await updateItemController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(getItemById).toHaveBeenCalledWith('item-uuid-123');
-    expect(updateItem).toHaveBeenCalledWith({
-      id: 'item-uuid-123',
+    expect(updateItem).toHaveBeenCalledWith('item-uuid-123', {
       name: 'Updated Name',
       completed: true,
+      column_id: undefined,
+      assigned_to: undefined,
+      position: undefined,
     });
     expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(mockRes.json).toHaveBeenCalledWith(updatedItem);
   });
 
   it('should use existing values if name or completed are not provided in body', async () => {
-    const existingItem = { id: 'item-uuid-123', name: 'Old Name', completed: false, userId: 'user-uuid-123' };
-    const updatedItem = { id: 'item-uuid-123', name: 'Old Name', completed: false, userId: 'user-uuid-123' };
+    const existingItem = { id: 'item-uuid-123', name: 'Old Name', completed: false, user_id: 'user-uuid-123' };
+    const updatedItem = { id: 'item-uuid-123', name: 'Old Name', completed: false, user_id: 'user-uuid-123' };
 
     mockReq.body = {};
     (getItemById as jest.Mock).mockResolvedValue(existingItem);
@@ -57,10 +59,12 @@ describe('updateItemController', () => {
 
     await updateItemController(mockReq as AuthenticatedRequest, mockRes as Response);
 
-    expect(updateItem).toHaveBeenCalledWith({
-      id: 'item-uuid-123',
-      name: 'Old Name',
-      completed: false,
+    expect(updateItem).toHaveBeenCalledWith('item-uuid-123', {
+      name: undefined,
+      completed: undefined,
+      column_id: undefined,
+      assigned_to: undefined,
+      position: undefined,
     });
     expect(mockRes.status).toHaveBeenCalledWith(200);
   });
@@ -86,7 +90,7 @@ describe('updateItemController', () => {
   });
 
   it('should return 403 if the user does not own the item', async () => {
-    const existingItem = { id: 'item-uuid-123', name: 'Old Name', completed: false, userId: 'other-user-uuid' };
+    const existingItem = { id: 'item-uuid-123', name: 'Old Name', completed: false, user_id: 'other-user-uuid' };
     (getItemById as jest.Mock).mockResolvedValue(existingItem);
 
     await updateItemController(mockReq as AuthenticatedRequest, mockRes as Response);
@@ -102,6 +106,6 @@ describe('updateItemController', () => {
     await updateItemController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(500);
-    expect(mockRes.send).toHaveBeenCalledWith({ error: 'Database error' });
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });
   });
 });

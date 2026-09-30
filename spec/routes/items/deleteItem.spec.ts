@@ -17,7 +17,7 @@ describe('deleteItemController', () => {
 
     mockReq = {
       params: { id: 'item-uuid-123' },
-      user: { id: 'user-uuid-123' } as any,
+      user: { id: 'user-uuid-123', email: 'test@example.com' },
     };
 
     mockRes = {
@@ -28,7 +28,7 @@ describe('deleteItemController', () => {
   });
 
   it('should delete the item successfully and return status 204', async () => {
-    const mockItem = { id: 'item-uuid-123', userId: 'user-uuid-123' };
+    const mockItem = { id: 'item-uuid-123', user_id: 'user-uuid-123' };
 
     (getItemById as jest.Mock).mockResolvedValue(mockItem);
     (removeItem as jest.Mock).mockResolvedValue(undefined);
@@ -71,7 +71,7 @@ describe('deleteItemController', () => {
   });
 
   it('should return 403 if the user does not own the item', async () => {
-    const mockItem = { id: 'item-uuid-123', userId: 'other-user-uuid' };
+    const mockItem = { id: 'item-uuid-123', user_id: 'other-user-uuid' };
     (getItemById as jest.Mock).mockResolvedValue(mockItem);
 
     await deleteItemController(mockReq as AuthenticatedRequest, mockRes as Response);

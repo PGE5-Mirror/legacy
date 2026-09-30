@@ -2,7 +2,10 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware';
 import { getProjectById, removeProject } from '../../services/projects.service';
 
-export default async function deleteProjectController(req: AuthenticatedRequest, res: Response): Promise<Response> {
+export default async function deleteProjectController(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> {
   try {
     const userId = req.user?.id;
 
@@ -26,4 +29,4 @@ export default async function deleteProjectController(req: AuthenticatedRequest,
     const message = error instanceof Error ? error.message : String(error);
     return res.status(500).json({ error: message });
   }
-};
+}

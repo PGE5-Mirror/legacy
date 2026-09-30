@@ -3,7 +3,7 @@ import { consumeEvent } from '../../../../src/server/events/rabbitmq';
 import { createNotification } from '../../../../src/server/services/notifications.service';
 
 jest.mock('../../../../src/server/events/rabbitmq', () => ({
-  consumeEvent: jest.fn(),
+  consumeEvent: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('../../../../src/server/services/notifications.service', () => ({

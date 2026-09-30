@@ -56,16 +56,21 @@ for why this approach was chosen and its known limitations.
 
 ### Setting it up locally
 
-1. `docker compose up -d --build` starts the `prometheus` and `grafana` services alongside the app.
-2. Open Grafana at `http://localhost:3001` (login `admin` / `admin` on first run).
-3. Add a Prometheus data source: **Connections → Data sources → Add data source → Prometheus**.
-   Use `http://prometheus:9090` as the URL — not `localhost`, since Grafana resolves other
-   containers by their Docker Compose service name, not the host machine's ports.
-4. **Save & test** should confirm the connection.
-5. Build a dashboard: **Dashboards → New → New Dashboard → Add visualization**, pick the
-   Prometheus data source, and query e.g. `tasks_created_total` or `nodejs_eventloop_lag_seconds`.
-   Save the dashboard — it isn't persisted automatically until you explicitly save it, even though
-   Grafana's own state (`grafana_data` volume) survives container restarts.
+`docker compose up -d --build` starts the `prometheus` and `grafana` services alongside the app.
+Both the Prometheus data source and a starter dashboard ("Legacy App Overview") are provisioned
+automatically from `monitoring/grafana/provisioning/` — no manual setup is needed. Open Grafana at
+`http://localhost:3001` (login `admin` / `admin` on first run) and the dashboard is already there,
+showing `tasks_created_total`, event loop lag, and memory usage.
+
+### How the provisioning works
+
+- `monitoring/grafana/provisioning/datasources/datasource.yml` registers Prometheus as a data
+  source pointing at `http://prometheus:9090` — the Docker Compose service name, not `localhost`,
+  since Grafana resolves other containers by service name, not the host machine's ports.
+- `monitoring/grafana/provisioning/dashboards/dashboard.yml` tells Grafana to load any dashboard
+  JSON files found in that same folder.
+- `monitoring/grafana/provisioning/dashboards/app-overview.json` is the actual dashboard
+  definition — edit it directly (or export a new version from the Grafana UI) to change panels.
 
 ### Adding a new metric
 

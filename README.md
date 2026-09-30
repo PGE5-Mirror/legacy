@@ -12,6 +12,7 @@ progressively reworked into a Kanban application.
 | Architecture (persistence, event-driven messaging) | [`docs/architecture.md`](docs/architecture.md) |
 | Architecture Decision Records (why we chose what we chose) | [`docs/adr/`](docs/adr/) |
 | Development conventions (branching, commits, PRs) | [`docs/dev-conventions/dev-conventions.md`](docs/dev-conventions/dev-conventions.md) |
+| Contributing (local setup and pull requests) | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | Team charter, sprint objectives, meeting notes | [`docs/meetings/`](docs/meetings/) |
 
 ## Getting Started

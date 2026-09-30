@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../../../../src/server/middlewares/auth.middleware';
 import deleteProjectController from '../../../../src/server/routes/projects/deleteProject';
 import * as projectsService from '../../../../src/server/services/projects.service';
+import * as organizationService from '../../../../src/server/services/organization.service';
 import { createStandardControllerMocks } from '../../mockupUtils';
 
 jest.mock('uuid', () => ({
@@ -11,6 +12,10 @@ jest.mock('uuid', () => ({
 jest.mock('../../../../src/server/services/projects.service', () => ({
   getProjectById: jest.fn(),
   removeProject: jest.fn(),
+}));
+
+jest.mock('../../../../src/server/services/organization.service', () => ({
+  isOrganizationAdmin: jest.fn(),
 }));
 
 describe('deleteProjectController', () => {
@@ -30,14 +35,16 @@ describe('deleteProjectController', () => {
   });
 
   it('should delete the project successfully and return status 204', async () => {
-    const mockProject = { id: 'project-uuid-123', name: 'Test Project' };
+    const mockProject = { id: 'project-uuid-123', name: 'Test Project', organization_id: 'org-uuid-123' };
 
     (projectsService.getProjectById as jest.Mock).mockResolvedValue(mockProject);
+    (organizationService.isOrganizationAdmin as jest.Mock).mockResolvedValue(true);
     (projectsService.removeProject as jest.Mock).mockResolvedValue(undefined);
 
     await deleteProjectController(mockReq as AuthenticatedRequest, mockRes as Response);
 
     expect(projectsService.getProjectById).toHaveBeenCalledWith('project-uuid-123');
+    expect(organizationService.isOrganizationAdmin).toHaveBeenCalledWith('org-uuid-123', 'user-uuid-123');
     expect(projectsService.removeProject).toHaveBeenCalledWith('project-uuid-123');
     expect(mockRes.sendStatus).toHaveBeenCalledWith(204);
   });
@@ -52,12 +59,12 @@ describe('deleteProjectController', () => {
     expect(projectsService.getProjectById).not.toHaveBeenCalled();
   });
 
-  it('should return 404 if id is missing', async () => {
+  it('should return 400 if id is missing', async () => {
     mockReq.params = { id: '' };
 
     await deleteProjectController(mockReq as AuthenticatedRequest, mockRes as Response);
 
-    expect(mockRes.status).toHaveBeenCalledWith(404);
+    expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing id' });
     expect(projectsService.getProjectById).not.toHaveBeenCalled();
   });
@@ -70,6 +77,21 @@ describe('deleteProjectController', () => {
     expect(projectsService.getProjectById).toHaveBeenCalledWith('project-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(404);
     expect(mockRes.json).toHaveBeenCalledWith({ message: 'Project not found' });
+    expect(projectsService.removeProject).not.toHaveBeenCalled();
+  });
+
+  it('should return 403 if user is not an organization admin', async () => {
+    const mockProject = { id: 'project-uuid-123', name: 'Test Project', organization_id: 'org-uuid-123' };
+
+    (projectsService.getProjectById as jest.Mock).mockResolvedValue(mockProject);
+    (organizationService.isOrganizationAdmin as jest.Mock).mockResolvedValue(false);
+
+    await deleteProjectController(mockReq as AuthenticatedRequest, mockRes as Response);
+
+    expect(projectsService.getProjectById).toHaveBeenCalledWith('project-uuid-123');
+    expect(organizationService.isOrganizationAdmin).toHaveBeenCalledWith('org-uuid-123', 'user-uuid-123');
+    expect(mockRes.status).toHaveBeenCalledWith(403);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Only an organization admin can delete this project' });
     expect(projectsService.removeProject).not.toHaveBeenCalled();
   });
 

@@ -35,10 +35,17 @@ async function updateOrganization(id: string, data: OrganizationUpdate) {
   return await db.updateOrganization(id, data);
 }
 
+async function isOrganizationAdmin(organizationId: string, userId: string) {
+  const membership = await db.getOrganizationMembership(organizationId, userId);
+
+  return membership?.role === 'admin';
+}
+
 export {
   createOrganization,
   removeOrganization,
   getOrganizationById,
   getOrganizations,
   updateOrganization,
+  isOrganizationAdmin,
 };

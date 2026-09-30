@@ -8,6 +8,7 @@ interface OrganizationManagerProps {
   organizations: Organization[];
   request: ApiRequest;
   onOrganizationCreated: (organization: Organization) => void;
+  onOrganizationDeleted: (organizationId: string) => void;
   onProjectCreated: (project: Project) => void;
   onOrganizationChange?: (organizationId: string) => void;
 }
@@ -16,6 +17,7 @@ export function OrganizationManager({
   organizations,
   request,
   onOrganizationCreated,
+  onOrganizationDeleted,
   onProjectCreated,
   onOrganizationChange,
 }: OrganizationManagerProps) {
@@ -163,6 +165,57 @@ export function OrganizationManager({
     }
   };
 
+  const deleteSelectedOrganization = async () => {
+    if (!selectedOrganizationId) return;
+
+    const organization = organizations.find((item) => item.id === selectedOrganizationId);
+
+    const confirmed = window.confirm(
+      `Delete "${organization?.name || 'this organization'}"? All its projects, columns and tasks will also be deleted.`,
+    );
+
+    if (!confirmed) return;
+
+    setSaving(true);
+    setError('');
+
+    try {
+      await request<void>(`/organizations/${selectedOrganizationId}`, {
+        method: 'DELETE',
+      });
+
+      onOrganizationDeleted(selectedOrganizationId);
+      setSelectedOrganizationId('');
+      setMembers([]);
+      setShow(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to delete organization');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeMember = async (member: OrganizationMember) => {
+    if (!window.confirm(`Remove ${getUserEmail(member.user_id)}?`)) {
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+
+    try {
+      await request<void>(`/organizations/${selectedOrganizationId}/members/${member.id}`, {
+        method: 'DELETE',
+      });
+
+      setMembers((current) => current.filter((currentMember) => currentMember.id !== member.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to remove member');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const inviteUser = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -177,7 +230,7 @@ export function OrganizationManager({
         {
           method: 'POST',
           body: JSON.stringify({
-            added_user_id: selectedUserId,
+            user_id: selectedUserId,
           }),
         },
       );
@@ -283,7 +336,19 @@ export function OrganizationManager({
                   {members.map((member) => (
                     <li key={member.id} className="list-group-item d-flex justify-content-between">
                       <span>{getUserEmail(member.user_id)}</span>
-                      <span className="badge badge-light">{member.role}</span>
+                      <div className="d-flex align-items-center">
+                        <span className="badge badge-light mr-2">{member.role}</span>
+
+                        <Button
+                          type="button"
+                          variant="outline-danger"
+                          size="sm"
+                          disabled={saving}
+                          onClick={() => void removeMember(member)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -317,6 +382,17 @@ export function OrganizationManager({
                     </Button>
                   </div>
                 </Form.Group>
+
+                <Button
+                  type="button"
+                  variant="outline-danger"
+                  className="mb-4"
+                  disabled={saving || !selectedOrganizationId}
+                  onClick={() => void deleteSelectedOrganization()}
+                >
+                  <i className="fa fa-trash mr-2" />
+                  Delete organization
+                </Button>
               </Form>
             </>
           )}

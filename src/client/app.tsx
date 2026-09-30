@@ -4,6 +4,7 @@ import { Col, Container, Row } from 'react-bootstrap';
 
 import { apiRequest, consumeAuthMessage } from './api';
 import { AuthForm } from './components/AuthForm';
+import { HomeScreen } from './components/HomeScreen';
 import { KanbanBoard } from './components/KanbanBoard';
 import { ProfileModal } from './components/ProfileModal';
 import { UserSettings } from './types';
@@ -18,6 +19,10 @@ export function App() {
   const [loading, setLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [authenticatedView, setAuthenticatedView] = useState<'home' | 'board'>('home');
+  const [selectedProjectId, setSelectedProjectId] = useState(
+    () => localStorage.getItem('lastProjectId') || '',
+  );
   const [settings, setSettings] = useState<UserSettings>({
     user_id: '',
     high_contrast: false,
@@ -46,7 +51,6 @@ export function App() {
         if (!response.ok) {
           throw new Error(isRegistering ? 'Registration failed' : 'Invalid credentials');
         }
-
         return response.json();
       })
       .then((data) => {
@@ -70,7 +74,6 @@ export function App() {
               if (!loginResponse.ok) {
                 throw new Error('Auto-login failed after registration');
               }
-
               return loginResponse.json();
             })
             .then((loginData) => {
@@ -103,6 +106,13 @@ export function App() {
     setError('');
     setSuccessMessage('');
     setShowProfile(false);
+    setAuthenticatedView('home');
+  };
+
+  const openProject = (projectId: string) => {
+    localStorage.setItem('lastProjectId', projectId);
+    setSelectedProjectId(projectId);
+    setAuthenticatedView('board');
   };
 
   useEffect(() => {
@@ -111,7 +121,6 @@ export function App() {
     apiRequest<UserSettings>('/users/me/settings')
       .then(setSettings)
       .catch((err: Error) => {
-        // keep the default settings if they cannot be loaded
         console.error(err.message);
       });
   }, [token]);
@@ -149,8 +158,21 @@ export function App() {
             </Col>
           </Row>
         </Container>
+      ) : authenticatedView === 'home' ? (
+        <HomeScreen
+          onOpenProject={openProject}
+          onOpenWorkspace={() => {
+            setSelectedProjectId('');
+            setAuthenticatedView('board');
+          }}
+          onOpenProfile={() => setShowProfile(true)}
+        />
       ) : (
-        <KanbanBoard onOpenProfile={() => setShowProfile(true)} />
+        <KanbanBoard
+          initialProjectId={selectedProjectId}
+          onBackHome={() => setAuthenticatedView('home')}
+          onOpenProfile={() => setShowProfile(true)}
+        />
       )}
 
       <ProfileModal

@@ -37,7 +37,9 @@ describe('addItemController', () => {
       user_id: 'user-uuid-123',
       column_id: null,
       assigned_to: null,
-      position: 0
+      position: 0,
+      priority: 'medium',
+      deadline: null
     };
     
     (createItem as jest.Mock).mockResolvedValue(mockCreatedTask);
@@ -52,6 +54,8 @@ describe('addItemController', () => {
       column_id: null,
       assigned_to: null,
       position: 0,
+      priority: 'medium',
+      deadline: null,
     });
     
     expect(publishEvent).toHaveBeenCalledTimes(1);
@@ -61,6 +65,8 @@ describe('addItemController', () => {
       columnId: null,
       assignedTo: null,
       userId: 'user-uuid-123',
+      priority: 'medium',
+      deadline: null,
     });
 
     expect(mockRes.status).toHaveBeenCalledWith(201);
@@ -87,6 +93,36 @@ describe('addItemController', () => {
     expect(createItem).not.toHaveBeenCalled();
   });
 
+  it('should return 400 if position is invalid', async () => {
+    mockReq.body = { name: 'Task', position: -1 };
+
+    await addItemController(mockReq as AuthenticatedRequest, mockRes as Response);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Position must be a positive integer' });
+    expect(createItem).not.toHaveBeenCalled();
+  });
+
+  it('should return 400 if priority is invalid', async () => {
+    mockReq.body = { name: 'Task', priority: 'urgent' };
+
+    await addItemController(mockReq as AuthenticatedRequest, mockRes as Response);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Priority must be low, medium, or high' });
+    expect(createItem).not.toHaveBeenCalled();
+  });
+
+  it('should return 400 if deadline format is invalid', async () => {
+    mockReq.body = { name: 'Task', deadline: '2026/12/31' };
+
+    await addItemController(mockReq as AuthenticatedRequest, mockRes as Response);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Deadline must use the YYYY-MM-DD format' });
+    expect(createItem).not.toHaveBeenCalled();
+  });
+
   it('should proceed and return 201 even if event publication fails', async () => {
     const mockCreatedTask = { 
       id: 'task-uuid-123', 
@@ -94,7 +130,9 @@ describe('addItemController', () => {
       user_id: 'user-uuid-123',
       column_id: null,
       assigned_to: null,
-      position: 0
+      position: 0,
+      priority: 'medium',
+      deadline: null
     };
     
     (createItem as jest.Mock).mockResolvedValue(mockCreatedTask);

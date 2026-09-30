@@ -47,15 +47,6 @@ Use this file as the canonical standup template. Copy or duplicate it and name t
 - Blockers:
 	- Blocker: frontend needs to resolve conflicts
 
-
-### Elisenda
-- Yesterday / Done:
-	- merged backend for kanban
-- Today / In progress:
-	- Frontend
-- Blockers:
-	- Blocker: 
-
 ### Arthur
 - Yesterday / Done:
 	- Working on tests

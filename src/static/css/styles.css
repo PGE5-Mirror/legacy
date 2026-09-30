@@ -114,6 +114,86 @@ body {
   color: #4a3195;
 }
 
+/* Notifications: explicit colours so high-contrast mode keeps the panel readable, like the modals */
+
+.taskflow-notifications {
+  position: relative;
+}
+
+.taskflow-notifications .taskflow-icon-button {
+  position: relative;
+}
+
+.taskflow-notifications-badge {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  color: #fff;
+  background: #c62828;
+  box-shadow: 0 0 0 2px #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.taskflow-notifications-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 1000;
+  width: 320px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 14px 16px;
+  border: 1px solid #909197;
+  border-radius: 10px;
+  color: #202336;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(32, 35, 54, 0.18);
+}
+
+.taskflow-notifications-panel h2 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.taskflow-notifications-panel ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.taskflow-notifications-panel li {
+  padding: 9px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-top: 1px solid #e1e2ec;
+  font-size: 14px;
+}
+
+.taskflow-notifications-panel time,
+.taskflow-notifications-empty {
+  color: #6f707c;
+  font-size: 12px;
+}
+
+.taskflow-notifications-empty {
+  margin: 0;
+}
+
+.taskflow-notifications-error {
+  margin: 0 0 8px;
+  color: #b3261e;
+  font-size: 13px;
+}
+
 .taskflow-layout {
   min-height: calc(100vh - 68px);
   display: flex;
@@ -149,7 +229,7 @@ body {
 
 .taskflow-sidebar-title {
   margin: 0 10px 10px;
-  color: #9896ab;
+  color: #6a6978;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -161,7 +241,7 @@ body {
   padding: 10px 12px;
   border: 0;
   border-radius: 8px;
-  color: #6f6e82;
+  color: #6b6a7d;
   background: transparent;
   text-align: left;
   cursor: pointer;
@@ -180,7 +260,7 @@ body {
 
 .taskflow-sidebar-link {
   padding: 11px 12px;
-  color: #858397;
+  color: #6c6a7a;
   font-size: 14px;
 }
 
@@ -207,7 +287,7 @@ body {
 
 .taskflow-board-heading p {
   margin: 0;
-  color: #9899aa;
+  color: #6f707c;
 }
 
 .taskflow-loading,
@@ -215,7 +295,7 @@ body {
   padding: 45px;
   border-radius: 14px;
   background: #fff;
-  color: #898a9c;
+  color: #737483;
   text-align: center;
 }
 
@@ -267,7 +347,7 @@ body {
   min-width: 25px;
   padding: 3px 8px;
   border-radius: 20px;
-  color: #77798b;
+  color: #6d6f80;
   background: rgba(255, 255, 255, 0.65);
   font-size: 12px;
   text-align: center;
@@ -322,7 +402,7 @@ body {
 .kanban-task-card label {
   margin-bottom: 10px;
   display: block;
-  color: #9293a3;
+  color: #737481;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -333,7 +413,7 @@ body {
   height: 34px;
   margin-top: 5px;
   padding: 0 8px;
-  border: 1px solid #e1e2ec;
+  border: 1px solid #909197;
   border-radius: 7px;
   color: #595b70;
   background: #fafafe;
@@ -347,7 +427,7 @@ body {
   margin-top: 18px;
   border: 1px dashed rgba(83, 86, 113, 0.22);
   border-radius: 11px;
-  color: #787a95;
+  color: #6b6d85;
   background: rgba(255, 255, 255, 0.46);
   cursor: pointer;
   transition:
@@ -368,7 +448,11 @@ body {
 .taskflow-sidebar button:focus,
 .kanban-add-task:focus {
   border-color: transparent;
-  outline: 2px solid rgba(70, 55, 220, 0.35);
+  outline: 2px solid #4637dc;
+}
+
+.taskflow-header button:focus {
+  outline-color: #fff;
 }
 
 @media (max-width: 900px) {
@@ -443,6 +527,7 @@ body[data-theme='high-contrast'] .taskflow-sidebar {
 
 body[data-theme='high-contrast'] .taskflow-sidebar-link,
 body[data-theme='high-contrast'] .taskflow-sidebar-title,
+body[data-theme='high-contrast'] .taskflow-board-heading h1,
 body[data-theme='high-contrast'] .taskflow-board-heading p {
   color: #fff;
 }
@@ -523,4 +608,110 @@ body[data-theme='high-contrast'] a,
 body[data-theme='high-contrast'] .taskflow-dashboard-link {
   color: #fff;
   text-decoration: underline;
+}
+
+body[data-theme='high-contrast'] .taskflow-dashboard-link {
+  background: #000;
+  border: 2px solid #fff;
+}
+
+/* Scoped to the app so the white modals keep their normal focus style */
+body[data-theme='high-contrast'] .taskflow-app button:focus,
+body[data-theme='high-contrast'] .taskflow-app select:focus,
+body[data-theme='high-contrast'] .taskflow-app input:focus {
+  outline: 3px solid #ffd400;
+  outline-offset: 2px;
+}
+.taskflow-create-column {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: #ffffff;
+  border: 1px solid #e6e3ff;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(70, 52, 190, 0.08);
+}
+
+.taskflow-column-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 230px;
+  padding: 0 14px;
+  background: #f7f6ff;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  transition: 0.2s ease;
+}
+
+.taskflow-column-input:focus-within {
+  background: #ffffff;
+  border-color: #6c4df6;
+  box-shadow: 0 0 0 3px rgba(108, 77, 246, 0.12);
+}
+
+.taskflow-column-input i {
+  color: #6c4df6;
+}
+
+.taskflow-column-input input {
+  width: 100%;
+  height: 42px;
+  padding: 0;
+  color: #28243d;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font: inherit;
+}
+
+.taskflow-column-input input::placeholder {
+  color: #9a96aa;
+}
+
+.taskflow-add-column-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 18px;
+  color: #ffffff;
+  font-weight: 700;
+  white-space: nowrap;
+  background: linear-gradient(135deg, #5b35f5, #7657ff);
+  border: 0;
+  border-radius: 10px;
+  box-shadow: 0 5px 14px rgba(91, 53, 245, 0.24);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.taskflow-add-column-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(91, 53, 245, 0.32);
+}
+
+.taskflow-add-column-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+@media (max-width: 768px) {
+  .taskflow-board-heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .taskflow-create-column {
+    width: 100%;
+  }
+
+  .taskflow-column-input {
+    flex: 1;
+    min-width: 0;
+  }
 }

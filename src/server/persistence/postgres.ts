@@ -3,14 +3,21 @@ import { Task, NewTask, TaskUpdate } from '../models/Task';
 import { Project, NewProject, ProjectUpdate } from '../models/Project';
 import { Column, NewColumn, ColumnUpdate } from '../models/Column';
 import { Organization, NewOrganization, OrganizationUpdate } from '../models/Organization';
-import { User, UserExport } from '../models/User';
-
+import { User, UserExport, UserSummary } from '../models/User';
 import {
   OrganizationMember,
   NewOrganizationMember,
   OrganizationMemberUpdate,
 } from '../models/OrganizationMember';
 import { UserSettings, UserSettingsUpdate } from '../models/UserSettings';
+
+interface Notification {
+  id?: string;
+  userId: string;
+  message: string;
+  read?: boolean;
+  createdAt?: Date;
+}
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -58,13 +65,7 @@ async function storeItem(item: NewTask): Promise<Task> {
       (name, user_id, column_id, assigned_to, position)
      VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
-    [
-      item.name,
-      item.user_id,
-      item.column_id ?? null,
-      item.assigned_to ?? null,
-      item.position ?? 0,
-    ],
+    [item.name, item.user_id, item.column_id ?? null, item.assigned_to ?? null, item.position ?? 0],
   );
 
   return rows[0];
@@ -263,21 +264,29 @@ async function getUser(email: string): Promise<User | undefined> {
   return rows[0];
 }
 
+async function getUsers(): Promise<UserSummary[]> {
+  const { rows }: QueryResult<UserSummary> = await pool.query(
+    'SELECT id, email FROM users ORDER BY email ASC',
+  );
+
+  return rows;
+}
+
 export async function getUserById(id: string): Promise<UserExport | undefined> {
   const { rows }: QueryResult<UserExport> = await pool.query(
-      'SELECT id, email, "createdAt", tos_accepted_at, tos_version FROM users WHERE id = $1',
-      [id],
+    'SELECT id, email, "createdAt", tos_accepted_at, tos_version FROM users WHERE id = $1',
+    [id],
   );
   return rows[0];
 }
 
 async function getUserOrganizations(userId: string) {
   const { rows } = await pool.query(
-      `SELECT o.id, o.name, om.role, om."createdAt" as joined_at
+    `SELECT o.id, o.name, om.role, om."createdAt" as joined_at
      FROM organization_members om
      JOIN organizations o ON o.id = om.organization_id
      WHERE om.user_id = $1`,
-      [userId],
+    [userId],
   );
   return rows;
 }
@@ -341,6 +350,22 @@ async function upsertUserSettings(
   }
 }
 
+async function createNotification(notification: Notification): Promise<Notification> {
+  const { rows }: QueryResult<Notification> = await pool.query(
+    'INSERT INTO notifications (id, user_id, message) VALUES ($1, $2, $3) RETURNING *',
+    [notification.id, notification.userId, notification.message],
+  );
+  return rows[0];
+}
+
+async function getNotificationsByUserId(userId: string): Promise<Notification[]> {
+  const { rows }: QueryResult<Notification> = await pool.query(
+    'SELECT * FROM notifications WHERE user_id = $1 ORDER BY "createdAt" DESC',
+    [userId],
+  );
+  return rows;
+}
+
 export {
   init,
   teardown,
@@ -353,8 +378,11 @@ export {
   removeItem,
   storeUser,
   getUser,
+  getUsers,
   getUserSettings,
   upsertUserSettings,
   getUserExportData,
   deleteUser,
+  createNotification,
+  getNotificationsByUserId,
 };

@@ -1,3 +1,5 @@
+export type TaskPriority = 'low' | 'medium' | 'high';
+
 export interface Item {
   id: string;
   name: string;
@@ -7,6 +9,8 @@ export interface Item {
   assigned_to: string | null;
   position: number;
   createdAt: string;
+  priority: TaskPriority;
+  deadline: string | null;
 }
 
 export type ItemCallback = (item: Item) => void;

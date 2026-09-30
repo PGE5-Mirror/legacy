@@ -7,13 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - '3000:3000'
-    environment:
-      - DATABASE_URL=postgres://todo_user:todo_password@db:5432/todo_db
-      - NODE_ENV=production
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
+    env_file:
+      - .env
     networks:
       - todo-network
     depends_on:
@@ -26,10 +21,8 @@ services:
     image: postgres:16-alpine
     ports:
       - '5432:5432'
-    environment:
-      - POSTGRES_DB=todo_db
-      - POSTGRES_USER=todo_user
-      - POSTGRES_PASSWORD=todo_password
+    env_file:
+      - .env
     volumes:
       - pg_data:/var/lib/postgresql/data
     networks:

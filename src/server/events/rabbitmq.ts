@@ -29,14 +29,25 @@ async function publishEvent<T>(queueName: string, payload: T): Promise<void> {
   ch.sendToQueue(queueName, Buffer.from(JSON.stringify(payload)), { persistent: true });
 }
 
-async function consumeEvent<T>(queueName: string, onMessage: (data: T) => void): Promise<void> {
+async function consumeEvent<T>(
+  queueName: string,
+  onMessage: (data: T) => void | Promise<void>,
+): Promise<void> {
   const ch = await connect();
   await ch.assertQueue(queueName, { durable: true });
-  ch.consume(queueName, (msg) => {
+  // At most one unacknowledged message per consumer, so several consumers share the queue fairly
+  await ch.prefetch(1);
+  ch.consume(queueName, async (msg) => {
     if (msg) {
-      const data = JSON.parse(msg.content.toString());
-      onMessage(data);
-      ch.ack(msg);
+      // Ack only once the handler has finished, otherwise the prefetch limit has no effect.
+      // A failing message is still acked so it can't block the consumer forever.
+      try {
+        await onMessage(JSON.parse(msg.content.toString()));
+      } catch (err) {
+        console.error(`Failed to handle message from ${queueName}`, err);
+      } finally {
+        ch.ack(msg);
+      }
     }
   });
 }

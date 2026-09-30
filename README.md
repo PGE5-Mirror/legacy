@@ -78,8 +78,7 @@ require a `Bearer` token from `/login`):
 | Notifications | `/notifications` |
 | User account | `/users`, `/users/me`, `/users/me/export` |
 
-Full endpoint-by-endpoint documentation (methods, request/response shapes, status codes) is
-tracked separately — see issue #96.
+The API documentation is available at `/api-docs` when the project is started.
 
 ## Code quality
 - `npm run lint` — runs ESLint

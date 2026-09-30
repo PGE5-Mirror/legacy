@@ -1,6 +1,6 @@
-# ADR [NUMBER]: [TITLE]
+# ADR 002: Choosing database
 
-* **Status:** Proposed
+* **Status:** Accepted
 * **Date:** 18/09/2026
 * **Authors:** Clément
 

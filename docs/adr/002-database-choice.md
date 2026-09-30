@@ -1,4 +1,4 @@
-# ADR [NUMBER]: [TITLE]
+# ADR 002: Data base
 
 * **Status:** Proposed
 * **Date:** 18/09/2026

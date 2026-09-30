@@ -79,6 +79,9 @@ export function KanbanBoard({ initialProjectId, onBackHome, onOpenProfile }: Kan
     setError('');
     setActiveProject(project);
 
+    if (project.organization_id) {
+      localStorage.setItem('lastOrganizationId', project.organization_id);
+    }
     localStorage.setItem('lastProjectId', project.id);
 
     try {
@@ -115,30 +118,21 @@ export function KanbanBoard({ initialProjectId, onBackHome, onOpenProfile }: Kan
     }
   }, []);
 
-  useEffect(() => {
-    const loadWorkspace = async () => {
+  const switchOrganization = useCallback(
+    async (organizationId: string) => {
+      const organization = organizations.find((entry) => entry.id === organizationId);
+
+      if (!organization) return;
+
+      localStorage.setItem('lastOrganizationId', organizationId);
+      setActiveOrganization(organization);
       setLoading(true);
       setError('');
 
       try {
-        const organizationList = await request<Organization[]>('/organizations');
-        setOrganizations(organizationList);
-
-        const organization = organizationList[0];
-        setActiveOrganization(organization || null);
-
-        if (!organization) {
-          setProjects([]);
-          setMembers([]);
-          setColumns([]);
-          setTasksByColumn({});
-          setError('No organization is available.');
-          return;
-        }
-
         const [projectList, memberList, userList] = await Promise.all([
-          request<Project[]>(`/organizations/${organization.id}/projects`),
-          request<OrganizationMember[]>(`/organizations/${organization.id}/members`),
+          request<Project[]>(`/organizations/${organizationId}/projects`),
+          request<OrganizationMember[]>(`/organizations/${organizationId}/members`),
           request<UserSummary[]>('/users'),
         ]);
 
@@ -148,6 +142,64 @@ export function KanbanBoard({ initialProjectId, onBackHome, onOpenProfile }: Kan
 
         if (projectList[0]) {
           await loadProject(projectList[0]);
+        } else {
+          setActiveProject(null);
+          setColumns([]);
+          setTasksByColumn({});
+          setError('No project is available.');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unable to load organization');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loadProject, organizations],
+  );
+
+  useEffect(() => {
+    const loadWorkspace = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const organizationList = await request<Organization[]>('/organizations');
+        setOrganizations(organizationList);
+
+        const savedOrganizationId = localStorage.getItem('lastOrganizationId');
+        const preferredOrganization =
+          organizationList.find((organization) => organization.id === savedOrganizationId) ||
+          organizationList[0];
+
+        setActiveOrganization(preferredOrganization || null);
+
+        if (!preferredOrganization) {
+          setProjects([]);
+          setMembers([]);
+          setColumns([]);
+          setTasksByColumn({});
+          setError('No organization is available.');
+          return;
+        }
+
+        const [projectList, memberList, userList] = await Promise.all([
+          request<Project[]>(`/organizations/${preferredOrganization.id}/projects`),
+          request<OrganizationMember[]>(`/organizations/${preferredOrganization.id}/members`),
+          request<UserSummary[]>('/users'),
+        ]);
+
+        setUsers(userList);
+        setProjects(projectList);
+        setMembers(memberList);
+
+        const preferredProjectId = initialProjectId || localStorage.getItem('lastProjectId') || '';
+        const matchingProject =
+          projectList.find((project) => project.id === preferredProjectId) ||
+          projectList[0] ||
+          null;
+
+        if (matchingProject) {
+          await loadProject(matchingProject);
         } else {
           setActiveProject(null);
           setColumns([]);
@@ -396,6 +448,9 @@ export function KanbanBoard({ initialProjectId, onBackHome, onOpenProfile }: Kan
             onOrganizationCreated={(organization) => {
               setOrganizations((current) => [...current, organization]);
               setActiveOrganization(organization);
+            }}
+            onOrganizationChange={(organizationId) => {
+              void switchOrganization(organizationId);
             }}
             onProjectCreated={(project) => {
               setProjects((current) => [...current, project]);

@@ -202,6 +202,10 @@ router.post('/organizations/:id/members', verifyToken, addOrganizationMemberCont
  *                   type: string
  *                   example: Internal server error message
  */
-router.delete('/organizations/:id/members/:memberId', verifyToken, deleteOrganizationMemberController);
+router.delete(
+  '/organizations/:id/members/:memberId',
+  verifyToken,
+  deleteOrganizationMemberController,
+);
 
 export default router;

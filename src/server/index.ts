@@ -34,12 +34,16 @@ app.use('/', organizationsRoutes);
 app.use('/', projectsRoutes);
 app.use('/', userSettingsRoutes);
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  swaggerOptions: {
-    operationsSorter: 'alpha',
-    tagsSorter: 'alpha'
-  }
-}));
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    swaggerOptions: {
+      operationsSorter: 'alpha',
+      tagsSorter: 'alpha',
+    },
+  }),
+);
 
 app.get('/', (_req, res) => {
   res.sendFile(path.resolve(staticPath, 'index.html'));
@@ -47,8 +51,10 @@ app.get('/', (_req, res) => {
 
 db.init()
   .then(() => {
-    app.listen(3000, () => console.log('Listening on port 3000'));
-    app.listen(3000, () => console.log('API documentation available on http://localhost:3000/api-docs'));
+    app.listen(3000, () => {
+      console.log('Listening on port 3000');
+      console.log('API documentation available on http://localhost:3000/api-docs');
+    });
     startTaskCreatedConsumer();
   })
   .catch((err: unknown) => {

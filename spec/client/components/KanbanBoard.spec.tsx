@@ -18,6 +18,8 @@ const existingTask: Item = {
   assigned_to: null,
   position: 0,
   createdAt,
+  priority: 'medium',
+  deadline: 'date'
 };
 
 const serverData: Record<string, unknown> = {
@@ -75,7 +77,7 @@ function taskCard(name: string) {
 }
 
 async function renderBoard() {
-  render(<KanbanBoard onOpenProfile={jest.fn()} />);
+  render(<KanbanBoard onOpenProfile={jest.fn()} onBackHome={jest.fn()}/>);
   await screen.findByText('Write tests');
 }
 
@@ -112,6 +114,8 @@ describe('KanbanBoard', () => {
       column_id: 'col-1',
       assigned_to: 'user-2',
       position: 1,
+      deadline: null,
+      priority: 'medium',
     });
   });
 

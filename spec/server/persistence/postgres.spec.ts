@@ -98,7 +98,7 @@ describe('PostgreSQL Persistence Layer', () => {
 
       expect(poolInstance.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO tasks'),
-        ['New Task', 'user-1', 'col-1', 'user-2', 1]
+        ['New Task', 'user-1', 'col-1', 'user-2', 1, 'medium', null]
       );
       expect(result).toEqual(storedItem);
     });

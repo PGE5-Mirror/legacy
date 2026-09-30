@@ -62,10 +62,26 @@ async function getItemsByColumnId(columnId: string): Promise<Task[]> {
 async function storeItem(item: NewTask): Promise<Task> {
   const { rows }: QueryResult<Task> = await pool.query(
     `INSERT INTO tasks
-      (name, user_id, column_id, assigned_to, position)
-     VALUES ($1, $2, $3, $4, $5)
+      (
+        name,
+        user_id,
+        column_id,
+        assigned_to,
+        position,
+        priority,
+        deadline
+      )
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING *`,
-    [item.name, item.user_id, item.column_id ?? null, item.assigned_to ?? null, item.position ?? 0],
+    [
+      item.name,
+      item.user_id,
+      item.column_id ?? null,
+      item.assigned_to ?? null,
+      item.position ?? 0,
+      item.priority ?? 'medium',
+      item.deadline ?? null,
+    ],
   );
 
   return rows[0];
@@ -85,6 +101,8 @@ async function updateItem(id: string, item: TaskUpdate): Promise<Task | undefine
   if (item.column_id !== undefined) addField('column_id', item.column_id);
   if (item.assigned_to !== undefined) addField('assigned_to', item.assigned_to);
   if (item.position !== undefined) addField('position', item.position);
+  if (item.priority !== undefined) addField('priority', item.priority);
+  if (item.deadline !== undefined) addField('deadline', item.deadline);
 
   if (fields.length === 0) {
     return getItem(id);
@@ -218,6 +236,21 @@ export async function getOrganizationMembers(
     [organizationId],
   );
   return rows;
+}
+
+export async function getOrganizationMembership(
+  organizationId: string,
+  userId: string,
+): Promise<OrganizationMember | undefined> {
+  const { rows } = await pool.query<OrganizationMember>(
+    `SELECT *
+     FROM organization_members
+     WHERE organization_id = $1 AND user_id = $2
+     LIMIT 1`,
+    [organizationId, userId],
+  );
+
+  return rows[0];
 }
 
 export async function getOrganizationMember(id: string): Promise<OrganizationMember | undefined> {

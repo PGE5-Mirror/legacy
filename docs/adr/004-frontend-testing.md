@@ -1,6 +1,6 @@
 # ADR 004: Frontend testing approach
 
-* **Status:** Proposed
+* **Status:** Accepted
 * **Date:** 30/09/2026
 * **Authors:** Elisenda
 

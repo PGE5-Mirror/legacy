@@ -781,6 +781,66 @@ body[data-theme='high-contrast'] .kanban-task-card {
   box-shadow: none;
 }
 
+body[data-theme='high-contrast'] .home-app,
+body[data-theme='high-contrast'] .home-screen {
+  background: #000;
+  color: #fff;
+}
+
+body[data-theme='high-contrast'] .home-hero {
+  background: #000;
+  border: 2px solid #fff;
+  box-shadow: none;
+}
+
+body[data-theme='high-contrast'] .home-toolbar,
+body[data-theme='high-contrast'] .home-continue,
+body[data-theme='high-contrast'] .home-project-card,
+body[data-theme='high-contrast'] .home-state {
+  background: #0d0d0d;
+  border: 2px solid #fff;
+  color: #fff;
+  box-shadow: none;
+}
+
+body[data-theme='high-contrast'] .home-toolbar select {
+  background: #000;
+  color: #fff;
+  border: 1px solid #fff;
+}
+
+body[data-theme='high-contrast'] .home-continue button,
+body[data-theme='high-contrast'] .home-create-project {
+  background: #000;
+  color: #fff;
+  border: 2px solid #fff;
+}
+
+body[data-theme='high-contrast'] .home-continue button:hover,
+body[data-theme='high-contrast'] .home-create-project:hover {
+  background: #fff;
+  color: #000;
+}
+
+body[data-theme='high-contrast'] .home-project-icon,
+body[data-theme='high-contrast'] .home-continue-icon,
+body[data-theme='high-contrast'] .home-project-count {
+  background: #222;
+  color: #fff;
+  border: 1px solid #fff;
+}
+
+body[data-theme='high-contrast'] .home-eyebrow,
+body[data-theme='high-contrast'] .home-toolbar-label,
+body[data-theme='high-contrast'] .home-continue small,
+body[data-theme='high-contrast'] .home-project-copy small,
+body[data-theme='high-contrast'] .home-section-heading p,
+body[data-theme='high-contrast'] .home-project-arrow,
+body[data-theme='high-contrast'] .home-state p,
+body[data-theme='high-contrast'] .home-state h3 {
+  color: #fff !important;
+}
+
 /* The profile/settings modal always keeps its normal look, regardless of theme */
 
 body[data-theme='high-contrast'] .modal-content {

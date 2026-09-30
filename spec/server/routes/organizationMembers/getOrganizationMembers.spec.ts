@@ -9,7 +9,7 @@ jest.mock('uuid', () => ({
 }));
 
 jest.mock('../../../../src/server/services/organizationMembers.service', () => ({
-  getOrganizationMemberById: jest.fn(),
+  getOrganizationMemberByOrganizationId: jest.fn(),
 }));
 
 describe('getOrganizationMembersController', () => {
@@ -31,11 +31,11 @@ describe('getOrganizationMembersController', () => {
   it('should retrieve organization members successfully and return status 200', async () => {
     const mockMembers = [{ id: 'member-1', organization_id: 'org-uuid-123', user_id: 'user-1' }];
 
-    (organizationMembersService.getOrganizationMemberById as jest.Mock).mockResolvedValue(mockMembers);
+    (organizationMembersService.getOrganizationMemberByOrganizationId as jest.Mock).mockResolvedValue(mockMembers);
 
     await getOrganizationMembersController(mockReq as AuthenticatedRequest, mockRes as Response);
 
-    expect(organizationMembersService.getOrganizationMemberById).toHaveBeenCalledWith('org-uuid-123');
+    expect(organizationMembersService.getOrganizationMemberByOrganizationId).toHaveBeenCalledWith('org-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(mockRes.json).toHaveBeenCalledWith(mockMembers);
   });
@@ -47,21 +47,21 @@ describe('getOrganizationMembersController', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(401);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
-    expect(organizationMembersService.getOrganizationMemberById).not.toHaveBeenCalled();
+    expect(organizationMembersService.getOrganizationMemberByOrganizationId).not.toHaveBeenCalled();
   });
 
   it('should return an empty array if no members are returned', async () => {
-    (organizationMembersService.getOrganizationMemberById as jest.Mock).mockResolvedValue(null);
+    (organizationMembersService.getOrganizationMemberByOrganizationId as jest.Mock).mockResolvedValue(null);
 
     await getOrganizationMembersController(mockReq as AuthenticatedRequest, mockRes as Response);
 
-    expect(organizationMembersService.getOrganizationMemberById).toHaveBeenCalledWith('org-uuid-123');
+    expect(organizationMembersService.getOrganizationMemberByOrganizationId).toHaveBeenCalledWith('org-uuid-123');
     expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(mockRes.json).toHaveBeenCalledWith([]);
   });
 
   it('should return 500 if an error occurs', async () => {
-    (organizationMembersService.getOrganizationMemberById as jest.Mock).mockRejectedValue(new Error('Database error'));
+    (organizationMembersService.getOrganizationMemberByOrganizationId as jest.Mock).mockRejectedValue(new Error('Database error'));
 
     await getOrganizationMembersController(mockReq as AuthenticatedRequest, mockRes as Response);
 

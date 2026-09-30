@@ -26,8 +26,8 @@ export function ProfileModal({ show, onHide, onLogout, settings, setSettings }: 
       });
 
       setSettings(updated);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred while saving settings.');
     }
   };
 
@@ -38,7 +38,6 @@ export function ProfileModal({ show, onHide, onLogout, settings, setSettings }: 
     try {
       const res = await apiFetch('/users/me/export');
 
-      // Récupération du fichier JSON pour déclencher le téléchargement côté navigateur
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -48,8 +47,8 @@ export function ProfileModal({ show, onHide, onLogout, settings, setSettings }: 
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred during export.');
     } finally {
       setExporting(false);
     }
@@ -68,8 +67,8 @@ export function ProfileModal({ show, onHide, onLogout, settings, setSettings }: 
     try {
       await apiRequest<void>('/users/me', { method: 'DELETE' });
       onLogout();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred.');
       setDeleting(false);
     }
   };

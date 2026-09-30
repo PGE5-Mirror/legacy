@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware';
 import { deleteUser } from '../../services/user.service';
 
@@ -15,8 +15,9 @@ export default async function deleteAccount(
 
     await deleteUser(userId);
     return res.sendStatus(204);
-  } catch (error: any) {
+  } catch (error) {
     console.log(error);
-    return res.status(500).json({ error: error.message });
+    const message = error instanceof Error ? error.message : String(error);
+    return res.status(500).json({ error: message });
   }
 }

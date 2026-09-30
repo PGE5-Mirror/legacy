@@ -1,8 +1,12 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware';
+import { isOrganizationAdmin } from '../../services/organization.service';
 import { getProjectById, removeProject } from '../../services/projects.service';
 
-export default async function deleteProjectController(req: AuthenticatedRequest, res: Response): Promise<Response> {
+export default async function deleteProjectController(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> {
   try {
     const userId = req.user?.id;
 
@@ -13,11 +17,22 @@ export default async function deleteProjectController(req: AuthenticatedRequest,
     const rawId = req.params.id;
     const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
-    if (!id) return res.status(404).json({ error: 'Missing id' });
+    if (!id) {
+      return res.status(400).json({ error: 'Missing id' });
+    }
 
     const existing = await getProjectById(id);
+
     if (!existing) {
-      return res.status(404).json({ message: `Project not found` });
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    const isAdmin = await isOrganizationAdmin(existing.organization_id, userId);
+
+    if (!isAdmin) {
+      return res.status(403).json({
+        error: 'Only an organization admin can delete this project',
+      });
     }
 
     await removeProject(id);
@@ -26,4 +41,4 @@ export default async function deleteProjectController(req: AuthenticatedRequest,
     const message = error instanceof Error ? error.message : String(error);
     return res.status(500).json({ error: message });
   }
-};
+}

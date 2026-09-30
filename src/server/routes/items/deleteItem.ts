@@ -30,7 +30,8 @@ export default async function deleteItemController(
 
     await removeItem(id);
     return res.sendStatus(204);
-  } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return res.status(500).json({ error: message });
   }
 }

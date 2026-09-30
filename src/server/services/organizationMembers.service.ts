@@ -10,32 +10,32 @@ export interface OrganizationMember {
 }
 
 async function createOrganizationMember(data: OrganizationMember) {
-    const organizationMember: OrganizationMember = {
-        id: uuid(),
-        organization_id: data.organization_id,
-        user_id: data.user_id,
-        role: data.role,
-    }
-    return await db.storeOrganizationMember(organizationMember);
+  const organizationMember: OrganizationMember = {
+    id: uuid(),
+    organization_id: data.organization_id,
+    user_id: data.user_id,
+    role: data.role,
+  };
+  return await db.storeOrganizationMember(organizationMember);
 }
 
 async function removeOrganizationMember(id: string) {
-    const organizationMember = await db.getOrganizationMember(id);
-    await db.removeOrganizationMember(id);
-    return organizationMember;
+  const organizationMember = await db.getOrganizationMember(id);
+  await db.removeOrganizationMember(id);
+  return organizationMember;
 }
 
 async function getOrganizationMemberByOrganizationId(organizationMemberId: string) {
-    return await db.getOrganizationMembers(organizationMemberId);
+  return await db.getOrganizationMembers(organizationMemberId);
 }
 
 async function getOrganizationMemberById(id: string) {
-    return await db.getOrganizationMember(id);
+  return await db.getOrganizationMember(id);
 }
 
 export {
-    createOrganizationMember,
-    removeOrganizationMember,
-    getOrganizationMemberByOrganizationId,
-    getOrganizationMemberById,
-}
+  createOrganizationMember,
+  removeOrganizationMember,
+  getOrganizationMemberByOrganizationId,
+  getOrganizationMemberById,
+};

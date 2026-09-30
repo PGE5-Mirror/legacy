@@ -2,7 +2,10 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware';
 import { createProject } from '../../services/projects.service';
 
-export default async function addProjectController(req: AuthenticatedRequest, res: Response): Promise<Response> {
+export default async function addProjectController(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> {
   try {
     const userId = req.user?.id;
 
@@ -26,4 +29,4 @@ export default async function addProjectController(req: AuthenticatedRequest, re
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ error: message });
   }
-};
+}

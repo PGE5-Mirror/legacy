@@ -2,7 +2,10 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware';
 import { createOrganizationMember } from '../../services/organizationMembers.service';
 
-export default async function addOrganizationMemberController(req: AuthenticatedRequest, res: Response): Promise<Response> {
+export default async function addOrganizationMemberController(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> {
   try {
     const userId = req.user?.id;
 
@@ -11,15 +14,15 @@ export default async function addOrganizationMemberController(req: Authenticated
     }
     const rawId = req.params.id;
     const id = Array.isArray(rawId) ? rawId[0] : rawId;
-    const { added_user_id, role } = req.body;
+    const { user_id, role } = req.body;
 
-    if (!added_user_id) {
+    if (!user_id) {
       return res.status(400).json({ error: 'Missing user_id' });
     }
 
     const createdMember = await createOrganizationMember({
       organization_id: id,
-      user_id: added_user_id,
+      user_id: user_id,
       role: role,
     });
 
@@ -28,4 +31,4 @@ export default async function addOrganizationMemberController(req: Authenticated
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ error: message });
   }
-};
+}

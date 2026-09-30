@@ -1,21 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Form, Modal } from 'react-bootstrap';
-import {
-  Organization,
-  OrganizationMember,
-  UserSummary,
-  Project,
-} from '../types';
+import { Organization, OrganizationMember, UserSummary, Project } from '../types';
 
-type ApiRequest = <T>(
-  url: string,
-  options?: RequestInit,
-) => Promise<T>;
+type ApiRequest = <T>(url: string, options?: RequestInit) => Promise<T>;
 
 interface OrganizationManagerProps {
   organizations: Organization[];
   request: ApiRequest;
   onOrganizationCreated: (organization: Organization) => void;
+  onOrganizationDeleted: (organizationId: string) => void;
   onProjectCreated: (project: Project) => void;
   onOrganizationChange?: (organizationId: string) => void;
 }
@@ -24,8 +17,9 @@ export function OrganizationManager({
   organizations,
   request,
   onOrganizationCreated,
+  onOrganizationDeleted,
   onProjectCreated,
-  onOrganizationChange
+  onOrganizationChange,
 }: OrganizationManagerProps) {
   const [show, setShow] = useState(false);
   const [organizationName, setOrganizationName] = useState('');
@@ -71,8 +65,7 @@ export function OrganizationManager({
   };
 
   const openManager = async () => {
-    const organizationId =
-      selectedOrganizationId || organizations[0]?.id || '';
+    const organizationId = selectedOrganizationId || organizations[0]?.id || '';
 
     setShow(true);
     setLoading(true);
@@ -82,9 +75,7 @@ export function OrganizationManager({
       const [userList, memberList] = await Promise.all([
         request<UserSummary[]>('/users'),
         organizationId
-          ? request<OrganizationMember[]>(
-              `/organizations/${organizationId}/members`,
-            )
+          ? request<OrganizationMember[]>(`/organizations/${organizationId}/members`)
           : Promise.resolve([]),
       ]);
 
@@ -92,19 +83,13 @@ export function OrganizationManager({
       setMembers(memberList);
       setSelectedOrganizationId(organizationId);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Unable to load organization data',
-      );
+      setError(err instanceof Error ? err.message : 'Unable to load organization data');
     } finally {
       setLoading(false);
     }
   };
 
-  const changeOrganization = async (
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
+  const changeOrganization = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     const organizationId = event.target.value;
 
     setSelectedOrganizationId(organizationId);
@@ -119,11 +104,7 @@ export function OrganizationManager({
         onOrganizationChange(organizationId);
       }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Unable to load members',
-      );
+      setError(err instanceof Error ? err.message : 'Unable to load members');
     } finally {
       setLoading(false);
     }
@@ -138,26 +119,19 @@ export function OrganizationManager({
     setError('');
 
     try {
-      const createdOrganization = await request<Organization>(
-        '/organizations',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            name: organizationName.trim(),
-          }),
-        },
-      );
+      const createdOrganization = await request<Organization>('/organizations', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: organizationName.trim(),
+        }),
+      });
 
       onOrganizationCreated(createdOrganization);
       setOrganizationName('');
       setSelectedOrganizationId(createdOrganization.id);
       await loadMembers(createdOrganization.id);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Unable to create organization',
-      );
+      setError(err instanceof Error ? err.message : 'Unable to create organization');
     } finally {
       setSaving(false);
     }
@@ -172,28 +146,75 @@ export function OrganizationManager({
     setError('');
 
     try {
-        const createdProject = await request<Project>(
+      const createdProject = await request<Project>(
         `/organizations/${selectedOrganizationId}/projects`,
         {
-            method: 'POST',
-            body: JSON.stringify({
+          method: 'POST',
+          body: JSON.stringify({
             name: projectName.trim(),
-            }),
+          }),
         },
-        );
+      );
 
-        onProjectCreated(createdProject);
-        setProjectName('');
+      onProjectCreated(createdProject);
+      setProjectName('');
     } catch (err) {
-        setError(
-        err instanceof Error
-            ? err.message
-            : 'Unable to create project',
-        );
+      setError(err instanceof Error ? err.message : 'Unable to create project');
     } finally {
-        setSaving(false);
+      setSaving(false);
     }
-    };
+  };
+
+  const deleteSelectedOrganization = async () => {
+    if (!selectedOrganizationId) return;
+
+    const organization = organizations.find((item) => item.id === selectedOrganizationId);
+
+    const confirmed = window.confirm(
+      `Delete "${organization?.name || 'this organization'}"? All its projects, columns and tasks will also be deleted.`,
+    );
+
+    if (!confirmed) return;
+
+    setSaving(true);
+    setError('');
+
+    try {
+      await request<void>(`/organizations/${selectedOrganizationId}`, {
+        method: 'DELETE',
+      });
+
+      onOrganizationDeleted(selectedOrganizationId);
+      setSelectedOrganizationId('');
+      setMembers([]);
+      setShow(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to delete organization');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeMember = async (member: OrganizationMember) => {
+    if (!window.confirm(`Remove ${getUserEmail(member.user_id)}?`)) {
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+
+    try {
+      await request<void>(`/organizations/${selectedOrganizationId}/members/${member.id}`, {
+        method: 'DELETE',
+      });
+
+      setMembers((current) => current.filter((currentMember) => currentMember.id !== member.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to remove member');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const inviteUser = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -209,7 +230,7 @@ export function OrganizationManager({
         {
           method: 'POST',
           body: JSON.stringify({
-            added_user_id: selectedUserId,
+            user_id: selectedUserId,
           }),
         },
       );
@@ -217,11 +238,7 @@ export function OrganizationManager({
       setMembers((current) => [...current, createdMember]);
       setSelectedUserId('');
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Unable to add member',
-      );
+      setError(err instanceof Error ? err.message : 'Unable to add member');
     } finally {
       setSaving(false);
     }
@@ -229,21 +246,12 @@ export function OrganizationManager({
 
   return (
     <>
-      <button
-        type="button"
-        className="taskflow-project"
-        onClick={() => void openManager()}
-      >
+      <button type="button" className="taskflow-project" onClick={() => void openManager()}>
         <i className="fa fa-users" />
         Manage organizations
       </button>
 
-      <Modal
-        show={show}
-        onHide={() => setShow(false)}
-        centered
-        size="lg"
-      >
+      <Modal show={show} onHide={() => setShow(false)} centered size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Organization management</Modal.Title>
         </Modal.Header>
@@ -257,9 +265,7 @@ export function OrganizationManager({
               <div className="d-flex">
                 <Form.Control
                   value={organizationName}
-                  onChange={(event) =>
-                    setOrganizationName(event.target.value)
-                  }
+                  onChange={(event) => setOrganizationName(event.target.value)}
                   placeholder="Organization name"
                   required
                 />
@@ -289,10 +295,7 @@ export function OrganizationManager({
                   disabled={loading}
                 >
                   {organizations.map((organization) => (
-                    <option
-                      key={organization.id}
-                      value={organization.id}
-                    >
+                    <option key={organization.id} value={organization.id}>
                       {organization.name}
                     </option>
                   ))}
@@ -301,30 +304,26 @@ export function OrganizationManager({
 
               <Form onSubmit={createProject} className="mb-4">
                 <Form.Group controlId="projectName">
-                    <Form.Label>Create project</Form.Label>
+                  <Form.Label>Create project</Form.Label>
 
-                    <div className="d-flex">
+                  <div className="d-flex">
                     <Form.Control
-                        value={projectName}
-                        onChange={(event) => setProjectName(event.target.value)}
-                        placeholder="Project name"
-                        required
+                      value={projectName}
+                      onChange={(event) => setProjectName(event.target.value)}
+                      placeholder="Project name"
+                      required
                     />
 
                     <Button
-                        type="submit"
-                        className="ml-2"
-                        disabled={
-                        saving ||
-                        !selectedOrganizationId ||
-                        !projectName.trim()
-                        }
+                      type="submit"
+                      className="ml-2"
+                      disabled={saving || !selectedOrganizationId || !projectName.trim()}
                     >
-                        Create
+                      Create
                     </Button>
-                    </div>
+                  </div>
                 </Form.Group>
-                </Form>
+              </Form>
 
               <h6>Current members</h6>
 
@@ -335,14 +334,21 @@ export function OrganizationManager({
               ) : (
                 <ul className="list-group mb-3">
                   {members.map((member) => (
-                    <li
-                      key={member.id}
-                      className="list-group-item d-flex justify-content-between"
-                    >
+                    <li key={member.id} className="list-group-item d-flex justify-content-between">
                       <span>{getUserEmail(member.user_id)}</span>
-                      <span className="badge badge-light">
-                        {member.role}
-                      </span>
+                      <div className="d-flex align-items-center">
+                        <span className="badge badge-light mr-2">{member.role}</span>
+
+                        <Button
+                          type="button"
+                          variant="outline-danger"
+                          size="sm"
+                          disabled={saving}
+                          onClick={() => void removeMember(member)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -355,14 +361,8 @@ export function OrganizationManager({
                     <Form.Control
                       as="select"
                       value={selectedUserId}
-                      onChange={(event) =>
-                        setSelectedUserId(event.target.value)
-                      }
-                      disabled={
-                        saving ||
-                        loading ||
-                        availableUsers.length === 0
-                      }
+                      onChange={(event) => setSelectedUserId(event.target.value)}
+                      disabled={saving || loading || availableUsers.length === 0}
                     >
                       <option value="">
                         {availableUsers.length === 0
@@ -377,15 +377,22 @@ export function OrganizationManager({
                       ))}
                     </Form.Control>
 
-                    <Button
-                      type="submit"
-                      className="ml-2"
-                      disabled={saving || !selectedUserId}
-                    >
+                    <Button type="submit" className="ml-2" disabled={saving || !selectedUserId}>
                       Add
                     </Button>
                   </div>
                 </Form.Group>
+
+                <Button
+                  type="button"
+                  variant="outline-danger"
+                  className="mb-4"
+                  disabled={saving || !selectedOrganizationId}
+                  onClick={() => void deleteSelectedOrganization()}
+                >
+                  <i className="fa fa-trash mr-2" />
+                  Delete organization
+                </Button>
               </Form>
             </>
           )}

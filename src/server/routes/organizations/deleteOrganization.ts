@@ -2,7 +2,10 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware';
 import { getOrganizationById, removeOrganization } from '../../services/organization.service';
 
-export default async function deleteOrganizationController(req: AuthenticatedRequest, res: Response): Promise<Response> {
+export default async function deleteOrganizationController(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -24,4 +27,4 @@ export default async function deleteOrganizationController(req: AuthenticatedReq
     const message = error instanceof Error ? error.message : String(error);
     return res.status(500).json({ error: message });
   }
-};
+}

@@ -27,11 +27,4 @@ async function updateItem(id: string, data: TaskUpdate) {
   return await db.updateItem(id, data);
 }
 
-export {
-  createItem,
-  removeItem,
-  getItemsByUserId,
-  getItemsByColumnId,
-  getItemById,
-  updateItem,
-};
+export { createItem, removeItem, getItemsByUserId, getItemsByColumnId, getItemById, updateItem };

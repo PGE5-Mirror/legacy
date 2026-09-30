@@ -4,12 +4,10 @@ module.exports = {
   testEnvironment: 'node',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {}],
+    '^.+\\.(t|j)sx?$': ['ts-jest', { tsconfig: { allowJs: true } }],
   },
+  transformIgnorePatterns: ['node_modules/(?!(uuid)/)'],
   collectCoverage: true,
-  collectCoverageFrom: [
-    'src/server/**/*.ts',
-    '!src/server/**/*.d.ts',
-  ],
+  collectCoverageFrom: ['src/server/**/*.ts', '!src/server/**/*.d.ts'],
   coverageDirectory: 'coverage',
 };

@@ -15,7 +15,7 @@ describe('getItemsController', () => {
     jest.clearAllMocks();
 
     mockReq = {
-      user: { id: 'user-uuid-123' } as any,
+      user: { id: 'user-uuid-123', email: 'test@example.com' },
     };
 
     mockRes = {

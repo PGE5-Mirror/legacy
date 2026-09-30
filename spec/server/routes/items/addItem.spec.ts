@@ -21,7 +21,7 @@ describe('addItemController', () => {
     
     mockReq = {
       body: { name: 'Task' },
-      user: { id: 'user-uuid-123' } as any,
+      user: { id: 'user-uuid-123', email: 'test@example.com' },
     };
 
     mockRes = {

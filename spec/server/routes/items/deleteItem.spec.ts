@@ -17,7 +17,7 @@ describe('deleteItemController', () => {
 
     mockReq = {
       params: { id: 'item-uuid-123' },
-      user: { id: 'user-uuid-123' } as any,
+      user: { id: 'user-uuid-123', email: 'test@example.com' },
     };
 
     mockRes = {

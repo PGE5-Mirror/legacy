@@ -1,8 +1,14 @@
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware';
 import { Response } from 'express';
-import { getOrganizationMemberById, removeOrganizationMember } from '../../services/organizationMembers.service';
+import {
+  getOrganizationMemberById,
+  removeOrganizationMember,
+} from '../../services/organizationMembers.service';
 
-export default async function deleteOrganizationMemberController(req: AuthenticatedRequest, res: Response): Promise<Response> {
+export default async function deleteOrganizationMemberController(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> {
   try {
     const rawMemberId = req.params.memberId;
     const memberId = Array.isArray(rawMemberId) ? rawMemberId[0] : rawMemberId;
@@ -18,4 +24,4 @@ export default async function deleteOrganizationMemberController(req: Authentica
     const message = error instanceof Error ? error.message : String(error);
     return res.status(500).json({ error: message });
   }
-};
+}

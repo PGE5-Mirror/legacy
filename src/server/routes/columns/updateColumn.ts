@@ -2,7 +2,10 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware';
 import { getColumnById, updateColumn } from '../../services/columns.service';
 
-export default async function updateColumnController(req: AuthenticatedRequest, res: Response): Promise<Response> {
+export default async function updateColumnController(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<Response> {
   try {
     const userId = req.user?.id;
 
@@ -29,4 +32,4 @@ export default async function updateColumnController(req: AuthenticatedRequest, 
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).send({ error: message });
   }
-};
+}

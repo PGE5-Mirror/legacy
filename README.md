@@ -27,9 +27,11 @@ progressively reworked into a Kanban application.
 docker compose up -d --build
 ```
 
-This builds the app, and starts Postgres, RabbitMQ, and the app together:
+This builds the app, and starts Postgres, RabbitMQ, Prometheus, Grafana, and the app together:
 - App: http://localhost:3000
 - RabbitMQ management UI: http://localhost:15672 (login `guest` / `guest`)
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3001 (login `admin` / `admin` on first run) — the Prometheus data source and a starter dashboard are already set up, see `docs/architecture.md`
 
 Database migrations run automatically on startup — see `docs/architecture.md` for how that works.
 

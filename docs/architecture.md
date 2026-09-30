@@ -39,3 +39,42 @@ Authorization: Bearer <token>
 ```
 You should see a `[TaskCreated] New task created: ...` log line from the consumer, and a
 `GET /notifications` (with the same token) should return a new notification for that task.
+
+## Observability (Prometheus + Grafana)
+
+The app exposes a `GET /metrics` endpoint in Prometheus's text exposition format, scraped every
+15 seconds by a Prometheus service running in `docker-compose.yml`. Grafana connects to
+Prometheus as a data source to visualize the data. See [ADR 011](adr/011-observability-approach.md)
+for why this approach was chosen and its known limitations.
+
+### Metrics exposed
+
+- Default Node.js process metrics (CPU, memory, event loop lag, garbage collection, active
+  handles) via `prom-client`'s `collectDefaultMetrics()`.
+- `tasks_created_total` — a counter incremented in `src/server/routes/items/addItem.ts` each time
+  a task is successfully created.
+
+### Setting it up locally
+
+`docker compose up -d --build` starts the `prometheus` and `grafana` services alongside the app.
+Both the Prometheus data source and a starter dashboard ("Legacy App Overview") are provisioned
+automatically from `monitoring/grafana/provisioning/` — no manual setup is needed. Open Grafana at
+`http://localhost:3001` (login `admin` / `admin` on first run) and the dashboard is already there,
+showing `tasks_created_total`, event loop lag, and memory usage.
+
+### How the provisioning works
+
+- `monitoring/grafana/provisioning/datasources/datasource.yml` registers Prometheus as a data
+  source pointing at `http://prometheus:9090` — the Docker Compose service name, not `localhost`,
+  since Grafana resolves other containers by service name, not the host machine's ports.
+- `monitoring/grafana/provisioning/dashboards/dashboard.yml` tells Grafana to load any dashboard
+  JSON files found in that same folder.
+- `monitoring/grafana/provisioning/dashboards/app-overview.json` is the actual dashboard
+  definition — edit it directly (or export a new version from the Grafana UI) to change panels.
+
+### Adding a new metric
+
+1. Define it in `src/server/metrics.ts` using `prom-client`'s `Counter`/`Gauge`/`Histogram`, passing
+   `registers: [register]` explicitly — metrics created without this register to prom-client's own
+   global default registry instead, and silently won't appear on `/metrics`.
+2. Call `.inc()` (or the appropriate method) wherever the event you're tracking happens.

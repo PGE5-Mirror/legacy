@@ -13,6 +13,7 @@ import projectsRoutes from './routes/projects.routes';
 import userSettingsRoutes from './routes/userSettings.routes';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './swagger';
+import { register } from './metrics';
 
 const app = express();
 
@@ -24,6 +25,10 @@ const staticPath = path.resolve(__dirname, '..', 'static');
 app.use(express.static(staticPath));
 
 app.get('/health', (_req, res) => res.sendStatus(200));
+app.get('/metrics', async (_req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
 app.use('/', itemsRoutes);
 app.use('/', authRoutes);
 app.use('/', userRoutes);

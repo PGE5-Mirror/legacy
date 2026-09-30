@@ -1,4 +1,4 @@
-# ADR 001: REST API Documentation Approach
+# ADR 005: REST API Documentation Approach
 
 - **Status:** Proposed
 - **Date:** 30/09/2026

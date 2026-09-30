@@ -19,6 +19,8 @@ function startTaskCreatedConsumer(): void {
     } catch (err) {
       console.error('Failed to create notification for TaskCreated event:', err);
     }
+  }).catch((err: unknown) => {
+    console.error('Failed to start TaskCreated consumer:', err);
   });
 }
 

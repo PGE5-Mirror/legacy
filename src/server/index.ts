@@ -68,7 +68,8 @@ db.init()
   });
 
 const gracefulShutdown = () => {
-  db.teardown()
+  void db
+    .teardown()
     .catch(() => {})
     .then(() => process.exit());
 };

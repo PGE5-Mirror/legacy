@@ -146,9 +146,6 @@ export function KanbanBoard({ initialProjectId, onBackHome, onOpenProfile }: Kan
         setProjects(projectList);
         setMembers(memberList);
 
-        const selectedProject =
-          projectList.find((project) => project.id === initialProjectId) || projectList[0];
-
         if (projectList[0]) {
           await loadProject(projectList[0]);
         } else {

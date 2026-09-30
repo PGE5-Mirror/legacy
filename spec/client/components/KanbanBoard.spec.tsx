@@ -77,7 +77,7 @@ function taskCard(name: string) {
 }
 
 async function renderBoard() {
-  render(<KanbanBoard onOpenProfile={jest.fn()} />);
+  render(<KanbanBoard onOpenProfile={jest.fn()} onBackHome={jest.fn()}/>);
   await screen.findByText('Write tests');
 }
 

@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../../middlewares/auth.middleware';
 import { publishEvent } from '../../events/rabbitmq';
 import { createItem } from '../../services/items.service';
 import { TaskPriority } from '../../models/Task';
+import { tasksCreatedTotal } from '../../metrics';
 
 const allowedPriorities: TaskPriority[] = ['low', 'medium', 'high'];
 
@@ -48,6 +49,8 @@ export default async function addItemController(
       priority: priority ?? 'medium',
       deadline: deadline || null,
     });
+
+    tasksCreatedTotal.inc();
 
     try {
       await publishEvent('TaskCreated', {
